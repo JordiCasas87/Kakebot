@@ -33,6 +33,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Local env files ###
+.env
+
 ### macOS ###
 .DS_Store
 .AppleDouble

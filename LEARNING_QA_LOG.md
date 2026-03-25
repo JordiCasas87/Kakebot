@@ -58,6 +58,23 @@ Los ids de gastos son globales o por usuario?
 ### Respuesta
 Globales en la tabla `expenses` (autoincrement). La separacion por usuario la da `user_id`.
 
+### Pregunta
+Por que usar `passwordHash` en `User` en vez de guardar una contrasena simple de 6 caracteres o numeros? Y que significa `GenerationType.IDENTITY`?
+
+### Respuesta
+`passwordHash` significa que no guardamos la contrasena real en la base de datos, sino una version transformada y segura de esa contrasena.
+
+Por que:
+
+1. Si alguien accede a la BD, no vera la contrasena real del usuario.
+2. Es la forma profesional y segura de almacenar credenciales.
+3. En login se compara el hash calculado con el hash guardado, no texto plano con texto plano.
+
+Importante:
+La longitud de la contrasena (por ejemplo 6 caracteres) es una regla de validacion; el hash es la forma segura de guardarla. Son cosas distintas.
+
+`GenerationType.IDENTITY` viene de JPA/Hibernate y significa que la base de datos genera automaticamente el `id` del registro al insertarlo, normalmente con autoincrement.
+
 ---
 
 ## DTO, mapper y validacion
@@ -101,6 +118,42 @@ Por que el `POST` antes devolvia `ResponseEntity<?>`?
 
 ### Respuesta
 Por manejo temporal de distintos tipos de respuesta. Se dejo tipado como `ResponseEntity<ExpenseResponseDto>` y las excepciones se delegan al flujo global.
+
+### Pregunta
+Que hacen anotaciones Swagger/OpenAPI como `@Operation`, `@ApiResponse`, `@Content` y `@Schema` en un controller?
+
+### Respuesta
+Sirven para documentar mejor cada endpoint en Swagger.
+
+Ejemplo visto:
+
+```java
+@Operation(
+        operationId = "Create a new resource",
+        summary = "Creates a new resource and associates it with a challenge based on its topic.",
+        description = "If a challenge with the same topic exists, it is automatically assigned. If multiple challenges exist, it can be linked to all or remain unassigned.",
+        responses = {
+                @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = ResourceDto.class), mediaType = "application/json")}),
+                @ApiResponse(responseCode = "400", description = "Invalid parameters"),
+                @ApiResponse(responseCode = "500", description = "Server error")
+        }
+)
+```
+
+Significado practico:
+
+1. `@Operation` define nombre, resumen y descripcion del endpoint.
+2. `operationId` identifica la operacion de forma unica.
+3. `summary` muestra una descripcion corta en Swagger.
+4. `description` amplia el comportamiento del endpoint.
+5. `@ApiResponse` documenta codigos de respuesta esperados.
+6. `@Content` y `@Schema` indican el tipo de body que devuelve.
+
+Conclusión:
+No es necesario para que funcione la API, pero da una documentacion mas profesional y clara.
+
+Pendiente acordado:
+Anadir esta documentacion Swagger/OpenAPI detallada cuando los endpoints esten mas estables y no estemos cambiando tanto rutas, DTOs o respuestas.
 
 ---
 

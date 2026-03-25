@@ -23,7 +23,13 @@ public class User {
     @Column(nullable = false, length = 30)
     private UserProvider provider;
 
-    @Column(name = "external_id", nullable = false, length = 120)
+    @Column(nullable = false, length = 50, unique = true)
+    private String username;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
+    @Column(name = "external_id", length = 120)
     private String externalId;
 
     @Column(name = "created_at", nullable = false)
@@ -36,8 +42,10 @@ public class User {
 
 
      // Constructor  para crear usuarios desde la aplicacion.
-    public User(UserProvider provider, String externalId, LocalDateTime createdAt) {
+    public User(UserProvider provider, String username, String passwordHash, String externalId, LocalDateTime createdAt) {
         this.provider = provider;
+        this.username = username;
+        this.passwordHash = passwordHash;
         this.externalId = externalId;
         this.createdAt = createdAt;
     }
@@ -54,6 +62,22 @@ public class User {
 
     public void setProvider(UserProvider provider) {
         this.provider = provider;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public String getExternalId() {

@@ -4,6 +4,10 @@ import com.jordi.kakebot.common.dto.ApiErrorResponseDto;
 import com.jordi.kakebot.expense.exception.ExpenseNotFoundException;
 import com.jordi.kakebot.expense.exception.ExpenseUserNotFoundException;
 import com.jordi.kakebot.expense.exception.InvalidExpenseRequestException;
+import com.jordi.kakebot.user.exception.InvalidCredentialsException;
+import com.jordi.kakebot.user.exception.InvalidUserRequestException;
+import com.jordi.kakebot.user.exception.UserNotFoundException;
+import com.jordi.kakebot.user.exception.UsernameAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
@@ -68,7 +72,33 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({ExpenseNotFoundException.class, ExpenseUserNotFoundException.class})
+    @ExceptionHandler({InvalidUserRequestException.class, UsernameAlreadyExistsException.class})
+    public ResponseEntity<ApiErrorResponseDto> handleUserBadRequest(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponseDto> handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        );
+    }
+
+    @ExceptionHandler({ExpenseNotFoundException.class, ExpenseUserNotFoundException.class, UserNotFoundException.class})
     public ResponseEntity<ApiErrorResponseDto> handleNotFound(
             RuntimeException exception,
             HttpServletRequest request

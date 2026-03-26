@@ -3,6 +3,7 @@ package com.jordi.kakebot.user.controller;
 import com.jordi.kakebot.user.dto.UserLoginRequestDto;
 import com.jordi.kakebot.user.dto.UserRegisterRequestDto;
 import com.jordi.kakebot.user.dto.UserResponseDto;
+import com.jordi.kakebot.user.dto.UserUpdateRequestDto;
 import com.jordi.kakebot.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -44,7 +45,11 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<Void> updateMe() {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<UserResponseDto> updateMe(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody UserUpdateRequestDto request
+    ) {
+        UserResponseDto response = userService.updateMe(userId, request);
+        return ResponseEntity.ok(response);
     }
 }

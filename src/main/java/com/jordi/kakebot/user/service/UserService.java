@@ -3,6 +3,7 @@ package com.jordi.kakebot.user.service;
 import com.jordi.kakebot.user.dto.UserLoginRequestDto;
 import com.jordi.kakebot.user.dto.UserRegisterRequestDto;
 import com.jordi.kakebot.user.dto.UserResponseDto;
+import com.jordi.kakebot.user.dto.UserUpdateRequestDto;
 import com.jordi.kakebot.user.enums.UserProvider;
 import com.jordi.kakebot.user.exception.InvalidCredentialsException;
 import com.jordi.kakebot.user.exception.InvalidUserRequestException;
@@ -60,13 +61,62 @@ public class UserService {
     }
 
     public UserResponseDto getMe(Long userId) {
+        User user = resolveUserOrThrow(userId);
+        return userMapper.toResponseDto(user);
+    }
+
+    public UserResponseDto updateMe(Long userId, UserUpdateRequestDto request) {
+        User user = resolveUserOrThrow(userId);
+        updateUsernameIfPresent(user, request.username());
+        updatePasswordIfPresent(user, request.currentPassword(), request.newPassword());
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toResponseDto(updatedUser);
+    }
+
+    private User resolveUserOrThrow(Long userId) {
         if (userId == null) {
             throw new InvalidUserRequestException("El id de usuario es obligatorio");
         }
 
-        User user = userRepository.findById(userId)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+    }
 
-        return userMapper.toResponseDto(user);
+    private void updateUsernameIfPresent(User user, String username) {
+        if (username == null) {
+            return;
+        }
+
+        String normalizedUsername = username.trim();
+
+        if (normalizedUsername.isEmpty()) {
+            throw new InvalidUserRequestException("El nombre de usuario no puede estar vacio");
+        }
+
+        boolean usernameBelongsToAnotherUser = userRepository.existsByUsername(normalizedUsername)
+                && !normalizedUsername.equals(user.getUsername());
+
+        if (usernameBelongsToAnotherUser) {
+            throw new UsernameAlreadyExistsException(normalizedUsername);
+        }
+
+        user.setUsername(normalizedUsername);
+    }
+
+    private void updatePasswordIfPresent(User user, String currentPassword, String newPassword) {
+        if (newPassword == null) {
+            return;
+        }
+
+        if (newPassword.isBlank()) {
+            throw new InvalidUserRequestException("La nueva contrasena no puede estar vacia");
+        }
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
     }
 }

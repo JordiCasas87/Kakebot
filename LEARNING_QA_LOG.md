@@ -114,6 +114,32 @@ Que diferencia hay entre `@RequestHeader` y `@PathVariable`?
 `@PathVariable` lee datos de la URL (`/expenses/{id}`), `@RequestHeader` lee cabeceras HTTP (`X-User-Id: 1`).
 
 ### Pregunta
+Para que sirven los endpoints `GET /me` y `PUT /me` en `user`?
+
+### Respuesta
+`GET /me` sirve para recuperar el perfil del usuario autenticado o actual sin tener que pedir explicitamente su id en la URL. Es el endpoint tipico para que el front sepa "quien soy" y cargue los datos basicos del perfil.
+
+En nuestro caso puede usarse para:
+
+1. Mostrar nombre de usuario en la app.
+2. Saber si la cuenta tiene Telegram vinculado o no.
+3. Recuperar datos del usuario actual tras login o al entrar en la aplicacion.
+
+`PUT /me` sirve para actualizar datos del propio usuario actual sin exponer una ruta tipo `/users/{id}`.
+
+En nuestro caso podria usarse mas adelante para:
+
+1. Cambiar nombre de usuario.
+2. Cambiar contrasena.
+3. Actualizar preferencias de perfil.
+4. Gestionar datos de cuenta relacionados con la vinculacion.
+
+Importancia:
+
+1. `GET /me` tiene mucho valor practico desde el inicio.
+2. `PUT /me` es util, pero no es bloqueante para el flujo principal del proyecto en esta fase.
+
+### Pregunta
 Por que el `POST` antes devolvia `ResponseEntity<?>`?
 
 ### Respuesta
@@ -208,3 +234,31 @@ No. Workbench es cliente visual. Solo necesita estar activo el servidor MySQL.
 - Primer endpoint funcional completo: `POST /api/expenses`.
 - Endpoints funcionales: `GET /today`, `GET /month`, `GET /total/today`, `GET /total/month`, `GET /total/month/by-category`.
 - Pendientes en `ExpenseController`: `GET /recent`, `DELETE /{id}`.
+
+---
+
+## Validacion en DTOs
+
+### Pregunta
+Como funciona un DTO que tiene metodos dentro con `@AssertTrue`? Desde donde se llaman?
+
+### Respuesta
+Cuando en el controller usamos `@Valid @RequestBody`, Spring valida automaticamente el DTO antes de entrar al metodo del controller.
+
+Esa validacion revisa:
+1. anotaciones sobre campos, como `@Size`, `@NotBlank`, etc.
+2. metodos anotados con `@AssertTrue`
+
+Eso significa que los metodos del DTO no los llamamos nosotros a mano. Spring los ejecuta automaticamente durante la validacion.
+
+Ejemplo practico en `UserUpdateRequestDto`:
+1. `hasAnyFieldToUpdate()` comprueba que venga al menos un dato para actualizar.
+2. `hasCurrentPasswordWhenNewPasswordIsPresent()` comprueba que si llega `newPassword`, tambien llegue `currentPassword`.
+
+Si alguno de esos metodos devuelve `false`, Spring considera que el request es invalido y responde con `400 Bad Request` antes de llegar al service.
+
+Resumen corto:
+- `@Valid` en controller dispara la validacion.
+- Spring valida campos y tambien metodos con `@AssertTrue`.
+- Si falla, el controller no entra al service.
+- El error lo recoge nuestro `GlobalExceptionHandler`.

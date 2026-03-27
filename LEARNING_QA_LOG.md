@@ -262,3 +262,39 @@ Resumen corto:
 - Spring valida campos y tambien metodos con `@AssertTrue`.
 - Si falla, el controller no entra al service.
 - El error lo recoge nuestro `GlobalExceptionHandler`.
+
+---
+
+## Pendiente de estudio: JPA y Hibernate
+
+### Tema pendiente
+Conceptos a estudiar con calma: `LAZY`, `EAGER` y `@Transactional`.
+
+### Significado basico
+1. `LAZY`
+- Una relacion no se carga completa al principio.
+- Hibernate deja la carga para mas tarde, solo si realmente se accede a ella.
+- Ventaja: evita traer datos innecesarios.
+- Riesgo: si luego intentas acceder fuera de una sesion activa, puede aparecer `LazyInitializationException`.
+
+2. `EAGER`
+- La relacion se carga inmediatamente junto con la entidad principal.
+- Ventaja: evita problemas de carga diferida en casos simples.
+- Riesgo: puede traer mas datos de los necesarios y hacer consultas mas pesadas.
+
+3. `@Transactional`
+- Marca un metodo como unidad de trabajo con base de datos.
+- Mantiene activa la sesion/transaccion durante la ejecucion del metodo.
+- En muchos casos permite que Hibernate resuelva relaciones `LAZY` dentro de ese metodo sin error.
+
+### Nuestro caso real
+En `UserTelegramLinkCode`, la relacion con `User` esta marcada como `LAZY`.
+Cuando en `linkTelegramUser(...)` se accedio a `linkCode.getUser()`, Hibernate intento cargar el usuario en ese momento.
+El error aparecio porque ya no habia sesion activa para hacerlo.
+
+Por eso, para este caso, la solucion recomendada es estudiar el uso de `@Transactional` antes de cambiar todo a `EAGER`.
+
+### Idea clave para recordar
+- `LAZY` y `EAGER` deciden cuando se cargan las relaciones.
+- `@Transactional` decide si la operacion mantiene un contexto activo de base de datos durante el metodo.
+- No conviene usar `EAGER` solo para apagar errores sin entender el coste.

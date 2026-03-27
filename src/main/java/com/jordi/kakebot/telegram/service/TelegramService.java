@@ -1,12 +1,28 @@
 package com.jordi.kakebot.telegram.service;
 
+import com.jordi.kakebot.telegram.client.TelegramClient;
 import com.jordi.kakebot.telegram.dto.TelegramMessageDto;
 import com.jordi.kakebot.telegram.dto.TelegramWebhookRequestDto;
 import com.jordi.kakebot.telegram.enums.TelegramMessageType;
+import com.jordi.kakebot.user.exception.InvalidUserRequestException;
+import com.jordi.kakebot.user.service.UserTelegramLinkCodeService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TelegramService {
+
+    private static final String LINK_COMMAND_PREFIX = "/link";
+
+    private final TelegramClient telegramClient;
+    private final UserTelegramLinkCodeService userTelegramLinkCodeService;
+
+    public TelegramService(
+            TelegramClient telegramClient,
+            UserTelegramLinkCodeService userTelegramLinkCodeService
+    ) {
+        this.telegramClient = telegramClient;
+        this.userTelegramLinkCodeService = userTelegramLinkCodeService;
+    }
 
     public void processWebhookUpdate(TelegramWebhookRequestDto request) {
         TelegramMessageDto message = request.message();
@@ -64,15 +80,30 @@ public class TelegramService {
     }
 
     private void handleStartCommand(Long telegramUserId, Long chatId) {
-        // Next step: send welcome instructions through Telegram client.
+        telegramClient.sendMessage(
+                chatId,
+                "Bienvenido a KakeBot. Registrate en la web y usa /link CODIGO para vincular tu cuenta."
+        );
     }
 
     private void handleHelpCommand(Long telegramUserId, Long chatId) {
-        // Next step: send available commands through Telegram client.
+        telegramClient.sendMessage(
+                chatId,
+                "Comandos disponibles: /start, /help y /link CODIGO. Pronto podras registrar gastos desde Telegram."
+        );
     }
 
     private void handleLinkCommand(Long telegramUserId, Long chatId, String text) {
-        // Next step: extract link code and delegate account linking to UserService.
+        try {
+            String code = extractLinkCode(text);
+            userTelegramLinkCodeService.linkTelegramUser(code, telegramUserId);
+            telegramClient.sendMessage(
+                    chatId,
+                    "Tu cuenta ha quedado vinculada correctamente. Ya puedes usar KakeBot desde Telegram."
+            );
+        } catch (InvalidUserRequestException exception) {
+            telegramClient.sendMessage(chatId, exception.getMessage());
+        }
     }
 
     private void handleExpenseText(Long telegramUserId, Long chatId, String text) {
@@ -80,6 +111,13 @@ public class TelegramService {
     }
 
     private void handleUnknownCommand(Long telegramUserId, Long chatId, String text) {
-        // Next step: send fallback help message through Telegram client.
+        telegramClient.sendMessage(
+                chatId,
+                "No he entendido ese mensaje. Usa /help para ver los comandos disponibles."
+        );
+    }
+
+    private String extractLinkCode(String text) {
+        return text.substring(LINK_COMMAND_PREFIX.length()).trim();
     }
 }

@@ -3,7 +3,9 @@ package com.jordi.kakebot.user.controller;
 import com.jordi.kakebot.user.dto.UserLoginRequestDto;
 import com.jordi.kakebot.user.dto.UserRegisterRequestDto;
 import com.jordi.kakebot.user.dto.UserResponseDto;
+import com.jordi.kakebot.user.dto.UserTelegramLinkCodeResponseDto;
 import com.jordi.kakebot.user.dto.UserUpdateRequestDto;
+import com.jordi.kakebot.user.service.UserTelegramLinkCodeService;
 import com.jordi.kakebot.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final UserTelegramLinkCodeService userTelegramLinkCodeService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserTelegramLinkCodeService userTelegramLinkCodeService) {
         this.userService = userService;
+        this.userTelegramLinkCodeService = userTelegramLinkCodeService;
     }
 
     @PostMapping("/register")
@@ -42,6 +46,14 @@ public class UserController {
     public ResponseEntity<UserResponseDto> getMe(@RequestHeader("X-User-Id") Long userId) {
         UserResponseDto response = userService.getMe(userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/telegram-link-code")
+    public ResponseEntity<UserTelegramLinkCodeResponseDto> generateTelegramLinkCode(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        UserTelegramLinkCodeResponseDto response = userTelegramLinkCodeService.generateLinkCode(userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/me")

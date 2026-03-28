@@ -34,7 +34,10 @@ The backend already includes:
 - Telegram link code generation
 - Telegram webhook foundation
 - Telegram account linking through `/link <code>`
+- Real Telegram bot integration deployed on Render
+- Real Telegram commands working: `/start`, `/help`, `/link <code>`
 - Expense creation
+- Expense amount support with both dot and comma decimals
 - Daily and monthly expense listing
 - Daily and monthly totals
 - Totals grouped by category
@@ -65,6 +68,14 @@ Current intended flow:
 4. The backend links the Telegram account to the internal user
 5. Telegram can later be used as a quick expense input channel
 
+Current validated flow:
+
+1. A user can register in the deployed backend
+2. A temporary Telegram link code can be generated from Swagger
+3. The real Telegram bot receives `/start`, `/help`, and `/link <code>`
+4. The link code is consumed and the Telegram `externalId` is stored in MySQL
+5. Expenses can be created and queried against the deployed environment
+
 ## Local Run
 
 Create a `.env` file based on `.env.example` and define your database settings.
@@ -90,10 +101,21 @@ Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+## Deployment
+
+- Backend deployed on [Render](https://render.com/)
+- Remote MySQL hosted on [Railway](https://railway.com/)
+- Remote Swagger:
+
+```text
+https://kakebot.onrender.com/swagger-ui/index.html
+```
+
 ## Notes
 
 - The frontend is planned after backend V1 is completed.
-- Telegram integration is currently under active development.
+- Telegram bot linking is already working end-to-end in the deployed environment.
+- Telegram expense input from chat is the next functional step.
 - The repository documents architectural and learning decisions in `LEARNING_PACT.md`.
 
 ## License

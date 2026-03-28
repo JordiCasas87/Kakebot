@@ -1,6 +1,8 @@
 package com.jordi.kakebot.expense.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.jordi.kakebot.expense.enums.ExpenseCategory;
+import com.jordi.kakebot.expense.json.LenientBigDecimalDeserializer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -13,6 +15,7 @@ public record ExpenseRequestDto(
         String description,
         @NotNull(message = "El importe es obligatorio")
         @Positive(message = "El importe debe ser mayor que cero")
+        @JsonDeserialize(using = LenientBigDecimalDeserializer.class)
         BigDecimal amount
 ) {
 }

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class TelegramClient {
@@ -26,15 +27,23 @@ public class TelegramClient {
             return;
         }
 
-        telegramRestClient.post()
-                .uri("/sendMessage")
-                .body(Map.of(
-                        "chat_id", chatId,
-                        "text", text
-                ))
-                .retrieve()
-                .toBodilessEntity();
+        try {
+            telegramRestClient.post()
+                    .uri("/sendMessage")
+                    .body(Map.of(
+                            "chat_id", chatId,
+                            "text", text
+                    ))
+                    .retrieve()
+                    .toBodilessEntity();
 
-        LOGGER.info("Telegram message sent to chat {}", chatId);
+            LOGGER.info("Telegram message sent to chat {}", chatId);
+        } catch (RestClientException exception) {
+            LOGGER.error(
+                    "Telegram message could not be sent to chat {}. The main operation was completed, but the notification failed.",
+                    chatId,
+                    exception
+            );
+        }
     }
 }

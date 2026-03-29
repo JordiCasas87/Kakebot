@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 public record ExpenseRequestDto(
         @NotNull(message = "La categoria es obligatoria")
         ExpenseCategory category,
-        @NotBlank(message = "La descripcion es obligatoria")
+        @NotBlank(message = "La descripción es obligatoria")
         String description,
         @NotNull(message = "El importe es obligatorio")
         @Positive(message = "El importe debe ser mayor que cero")

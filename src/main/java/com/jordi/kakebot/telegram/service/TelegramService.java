@@ -103,7 +103,37 @@ public class TelegramService {
     private void handleHelpCommand(Long telegramUserId, Long chatId) {
         telegramClient.sendMessage(
                 chatId,
-                "Comandos disponibles: /start, /help y /link CODIGO. Pronto podras registrar gastos desde Telegram."
+                """
+                Comandos disponibles:
+
+                /start
+                Te da la bienvenida a KakeBot 🤖
+
+                /link CODIGO
+                Vincula tu cuenta de Telegram con tu usuario 🔗
+
+                /help
+                Muestra esta ayuda 📖
+
+                Como registrar un gasto:
+                Envia el mensaje en 3 lineas:
+
+                categoria
+                descripcion
+                importe
+
+                Categorias disponibles:
+                casa 🏠
+                comida 🍽️
+                transporte 🚌
+                ocio 🎉
+                otros 🧾
+
+                Ejemplo:
+                comida
+                compra en supermercado
+                23,50
+                """
         );
     }
 

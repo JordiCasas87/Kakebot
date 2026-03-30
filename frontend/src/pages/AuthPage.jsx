@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
-import mascotAnimation from '../assets/animations/Grabación de pantalla 2026-03-30 a las 12.04.35.mov'
-import { generateTelegramLinkCode, registerUser } from '../services/authService.js'
+import mascotAnimation from '../assets/animations/kakebotAnimHappy.mp4'
+import { generateTelegramLinkCode, loginUser, registerUser } from '../services/authService.js'
 import '../App.css'
 
 const MODES = {
@@ -10,7 +10,7 @@ const MODES = {
   register: 'register',
 }
 
-function AuthPage({ onRegisterSuccess }) {
+function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
   const [mode, setMode] = useState(null)
   const [registerUsername, setRegisterUsername] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
@@ -81,6 +81,31 @@ function AuthPage({ onRegisterSuccess }) {
     }
   }
 
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault()
+    resetFeedback()
+
+    if (!loginUsername.trim() || !loginPassword) {
+      setErrorMessage('Necesitamos tu usuario y tu contraseña para entrar.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const user = await loginUser({
+        username: loginUsername.trim(),
+        password: loginPassword,
+      })
+
+      onLoginSuccess?.(user)
+    } catch (error) {
+      setErrorMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   useEffect(() => {
     const videoElement = videoRef.current
 
@@ -136,7 +161,7 @@ function AuthPage({ onRegisterSuccess }) {
             playsInline
             aria-label="KakeBot animation"
           >
-            <source src={mascotAnimation} type="video/quicktime" />
+            <source src={mascotAnimation} type="video/mp4" />
           </video>
         </div>
       </section>
@@ -173,7 +198,7 @@ function AuthPage({ onRegisterSuccess }) {
 
                 <form
                   className="auth-form"
-                  onSubmit={isLogin ? undefined : handleRegisterSubmit}
+                  onSubmit={isLogin ? handleLoginSubmit : handleRegisterSubmit}
                 >
                   {!isLogin && (
                     <label className="field">
@@ -227,9 +252,11 @@ function AuthPage({ onRegisterSuccess }) {
 
                   {errorMessage ? <p className="auth-error-message">{errorMessage}</p> : null}
 
-                  <button className="submit-button" type={isLogin ? 'button' : 'submit'} disabled={isSubmitting}>
+                  <button className="submit-button" type="submit" disabled={isSubmitting}>
                     {isSubmitting
-                      ? 'Preparando tu cuenta...'
+                      ? isLogin
+                        ? 'Entrando en KakeBot...'
+                        : 'Preparando tu cuenta...'
                       : isLogin
                         ? 'Entrar en KakeBot'
                         : 'Crear mi cuenta'}

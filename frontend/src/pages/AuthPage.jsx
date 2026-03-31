@@ -205,7 +205,7 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
                       <span>Nombre de usuario</span>
                       <input
                         type="text"
-                        placeholder="pikachu87"
+                        placeholder="Nombre usuario"
                         value={registerUsername}
                         onChange={(event) => setRegisterUsername(event.target.value)}
                       />
@@ -217,7 +217,7 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
                       <span>Usuario</span>
                       <input
                         type="text"
-                        placeholder="pikachu87"
+                        placeholder="Nombre usuario"
                         value={loginUsername}
                         onChange={(event) => setLoginUsername(event.target.value)}
                       />

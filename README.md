@@ -83,7 +83,7 @@ Create a `.env` file based on `.env.example` and define your database settings.
 Expected environment variables:
 
 ```env
-DB_URL=jdbc:mysql://localhost:3306/kakebot?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+DB_URL=jdbc:mysql://localhost:3306/kakebot?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Madrid
 DB_USERNAME=root
 DB_PASSWORD=your_password
 TELEGRAM_BOT_TOKEN=your_bot_token
@@ -116,6 +116,7 @@ https://kakebot.onrender.com/swagger-ui/index.html
 - The frontend is planned after backend V1 is completed.
 - Telegram bot linking is already working end-to-end in the deployed environment.
 - Telegram expense input from chat is the next functional step.
+- The application is currently configured to use the `Europe/Madrid` time zone.
 - The repository documents architectural and learning decisions in `LEARNING_PACT.md`.
 
 ## License

@@ -16,6 +16,7 @@ import com.jordi.kakebot.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Clock;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.EnumMap;
@@ -29,17 +30,19 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
+    private final Clock clock;
 
-    public ExpenseService(ExpenseRepository expenseRepository, UserRepository userRepository, ExpenseMapper expenseMapper) {
+    public ExpenseService(ExpenseRepository expenseRepository, UserRepository userRepository, ExpenseMapper expenseMapper, Clock clock) {
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.expenseMapper = expenseMapper;
+        this.clock = clock;
     }
 
     public ExpenseResponseDto createExpense(Long userId, ExpenseRequestDto request) {
         User user = resolveUserOrThrow(userId);
 
-        Expense expense = expenseMapper.toEntity(request, user, LocalDateTime.now());
+        Expense expense = expenseMapper.toEntity(request, user, LocalDateTime.now(clock));
 
         Expense savedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponseDto(savedExpense);
@@ -48,7 +51,7 @@ public class ExpenseService {
     public List<ExpenseResponseDto> getTodayExpenses(Long userId) {
         User user = resolveUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
@@ -62,7 +65,7 @@ public class ExpenseService {
     public List<ExpenseResponseDto> getMonthExpenses(Long userId) {
         User user = resolveUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate firstDayOfMonth = today.withDayOfMonth(1);
         LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
 
@@ -79,7 +82,7 @@ public class ExpenseService {
     public TotalResponseDto getTodayTotal(Long userId) {
         User user = resolveUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
 
@@ -95,7 +98,7 @@ public class ExpenseService {
     public TotalResponseDto getMonthTotal(Long userId) {
         User user = resolveUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         LocalDate firstDayOfMonth = today.withDayOfMonth(1);
         LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
 
@@ -114,7 +117,7 @@ public class ExpenseService {
     public List<CategoryTotalResponseDto> getMonthTotalByCategory(Long userId) {
         User user = resolveUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         return getCategoryTotalsForPeriod(user.getId(), today.getYear(), today.getMonthValue());
     }
 

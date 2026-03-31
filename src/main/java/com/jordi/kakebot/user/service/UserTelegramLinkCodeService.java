@@ -7,6 +7,7 @@ import com.jordi.kakebot.user.model.User;
 import com.jordi.kakebot.user.model.UserTelegramLinkCode;
 import com.jordi.kakebot.user.repository.UserRepository;
 import com.jordi.kakebot.user.repository.UserTelegramLinkCodeRepository;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,19 +21,22 @@ public class UserTelegramLinkCodeService {
 
     private final UserRepository userRepository;
     private final UserTelegramLinkCodeRepository userTelegramLinkCodeRepository;
+    private final Clock clock;
 
     public UserTelegramLinkCodeService(
             UserRepository userRepository,
-            UserTelegramLinkCodeRepository userTelegramLinkCodeRepository
+            UserTelegramLinkCodeRepository userTelegramLinkCodeRepository,
+            Clock clock
     ) {
         this.userRepository = userRepository;
         this.userTelegramLinkCodeRepository = userTelegramLinkCodeRepository;
+        this.clock = clock;
     }
 
     public UserTelegramLinkCodeResponseDto generateLinkCode(Long userId) {
         User user = resolveUserOrThrow(userId);
         String code = generateUniqueCode();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime expiresAt = now.plusMinutes(LINK_CODE_EXPIRATION_MINUTES);
 
         UserTelegramLinkCode linkCode = userTelegramLinkCodeRepository.findByUserId(user.getId())
@@ -60,7 +64,7 @@ public class UserTelegramLinkCodeService {
         UserTelegramLinkCode linkCode = userTelegramLinkCodeRepository.findByCode(code.trim().toUpperCase())
                 .orElseThrow(() -> new InvalidUserRequestException("El codigo de vinculacion no existe"));
 
-        if (linkCode.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (linkCode.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
             throw new InvalidUserRequestException("El codigo de vinculacion ha caducado");
         }
 

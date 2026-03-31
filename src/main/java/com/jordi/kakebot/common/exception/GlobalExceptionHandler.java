@@ -10,6 +10,7 @@ import com.jordi.kakebot.user.exception.UserNotFoundException;
 import com.jordi.kakebot.user.exception.UsernameAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private final Clock clock;
+
+    public GlobalExceptionHandler(Clock clock) {
+        this.clock = clock;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponseDto> handleMethodArgumentNotValid(
@@ -135,7 +142,7 @@ public class GlobalExceptionHandler {
             List<String> details
     ) {
         ApiErrorResponseDto response = new ApiErrorResponseDto(
-                LocalDateTime.now(),
+                LocalDateTime.now(clock),
                 status.value(),
                 status.getReasonPhrase(),
                 message,

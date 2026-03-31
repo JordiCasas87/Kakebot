@@ -12,6 +12,7 @@ import com.jordi.kakebot.user.exception.UsernameAlreadyExistsException;
 import com.jordi.kakebot.user.mapper.UserMapper;
 import com.jordi.kakebot.user.model.User;
 import com.jordi.kakebot.user.repository.UserRepository;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,11 +24,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, Clock clock) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = new BCryptPasswordEncoder();
+        this.clock = clock;
     }
 
     public UserResponseDto register(UserRegisterRequestDto request) {
@@ -42,7 +45,7 @@ public class UserService {
                 normalizedUsername,
                 passwordEncoder.encode(request.password()),
                 null,
-                LocalDateTime.now()
+                LocalDateTime.now(clock)
         );
 
         User savedUser = userRepository.save(user);

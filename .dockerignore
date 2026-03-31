@@ -6,3 +6,6 @@ target
 README.md
 docs
 *.iml
+frontend/node_modules
+frontend/dist
+frontend/.vite

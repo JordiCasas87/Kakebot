@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
 import mascotImage from '../assets/images/kakebotBlanco.png'
@@ -135,6 +135,22 @@ function DashboardPage({ user, onLogout }) {
   const [insightsError, setInsightsError] = useState('')
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
   const [deletingExpenseId, setDeletingExpenseId] = useState(null)
+
+  useEffect(() => {
+    const hasOpenModal = isExpenseModalOpen || activeInsightsModal !== null
+    const previousBodyOverflow = document.body.style.overflow
+    const previousTouchAction = document.body.style.touchAction
+
+    if (hasOpenModal) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.body.style.touchAction = previousTouchAction
+    }
+  }, [activeInsightsModal, isExpenseModalOpen])
 
   const handleOpenExpenseModal = () => {
     setExpenseError('')

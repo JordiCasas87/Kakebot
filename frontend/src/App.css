@@ -580,6 +580,7 @@
     0 20px 40px rgba(41, 26, 4, 0.22),
     0 7px 0 rgba(22, 15, 4, 0.32);
   position: relative;
+  max-width: 100%;
 }
 
 .expense-modal-header {
@@ -667,7 +668,8 @@
 }
 
 .month-summary-card {
-  width: min(100%, 26rem);
+  width: 100%;
+  max-width: 26rem;
 }
 
 .expense-card-amount-block {
@@ -927,19 +929,20 @@
   }
 
   .expense-modal {
-    width: min(100%, 26rem);
+    width: min(calc(100vw - 1.5rem), 24.5rem);
     max-height: calc(100vh - 2.2rem - env(safe-area-inset-bottom));
     overflow-y: auto;
     padding: 0.95rem;
   }
 
   .insights-modal {
-    width: min(100%, 26rem);
+    width: min(calc(100vw - 1.5rem), 24.5rem);
   }
 
   .today-expense-card,
   .month-summary-card {
-    width: min(100%, 22rem);
+    width: 100%;
+    max-width: 100%;
   }
 
   .expense-card-footer {
@@ -949,7 +952,7 @@
 
   .insights-modal .totals-summary-card {
     min-width: unset;
-    width: fit-content;
-    max-width: calc(100% - 1rem);
+    width: auto;
+    max-width: 100%;
   }
 }

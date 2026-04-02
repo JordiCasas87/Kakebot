@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
 import mascotImage from '../assets/images/kakebotBlanco.png'
+import { generateTelegramLinkCode, getCurrentUser, unlinkTelegram } from '../services/authService.js'
 import {
   createExpense,
   deleteExpense,
@@ -114,9 +115,27 @@ function formatShortDate(value) {
   })
 }
 
-function DashboardPage({ user, onLogout }) {
+function formatExpiration(expiresAt) {
+  if (!expiresAt) {
+    return 'Válido durante 10 minutos.'
+  }
+
+  const date = new Date(expiresAt)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Válido durante 10 minutos.'
+  }
+
+  return `Válido hasta las ${date.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}.`
+}
+
+function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false)
   const [activeInsightsModal, setActiveInsightsModal] = useState(null)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [category, setCategory] = useState('comida')
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -135,9 +154,16 @@ function DashboardPage({ user, onLogout }) {
   const [insightsError, setInsightsError] = useState('')
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
   const [deletingExpenseId, setDeletingExpenseId] = useState(null)
+  const [settingsError, setSettingsError] = useState('')
+  const [settingsFeedback, setSettingsFeedback] = useState('')
+  const [isGeneratingLinkCode, setIsGeneratingLinkCode] = useState(false)
+  const [isUnlinkingTelegram, setIsUnlinkingTelegram] = useState(false)
+  const [isRefreshingUser, setIsRefreshingUser] = useState(false)
+  const [telegramLinkCodeData, setTelegramLinkCodeData] = useState(null)
+  const [isTelegramLinked, setIsTelegramLinked] = useState(Boolean(user.externalId))
 
   useEffect(() => {
-    const hasOpenModal = isExpenseModalOpen || activeInsightsModal !== null
+    const hasOpenModal = isExpenseModalOpen || activeInsightsModal !== null || isSettingsModalOpen
     const previousBodyOverflow = document.body.style.overflow
     const previousTouchAction = document.body.style.touchAction
 
@@ -150,7 +176,11 @@ function DashboardPage({ user, onLogout }) {
       document.body.style.overflow = previousBodyOverflow
       document.body.style.touchAction = previousTouchAction
     }
-  }, [activeInsightsModal, isExpenseModalOpen])
+  }, [activeInsightsModal, isExpenseModalOpen, isSettingsModalOpen])
+
+  useEffect(() => {
+    setIsTelegramLinked(Boolean(user.externalId))
+  }, [user.externalId])
 
   const handleOpenExpenseModal = () => {
     setExpenseError('')
@@ -167,6 +197,32 @@ function DashboardPage({ user, onLogout }) {
   const handleCloseInsightsModal = () => {
     setActiveInsightsModal(null)
     setInsightsError('')
+  }
+
+  const handleOpenSettingsModal = async () => {
+    setSettingsError('')
+    setSettingsFeedback('')
+    setTelegramLinkCodeData(null)
+    setIsSettingsModalOpen(true)
+
+    setIsRefreshingUser(true)
+
+    try {
+      const refreshedUser = await getCurrentUser(user.id)
+      setIsTelegramLinked(Boolean(refreshedUser.externalId))
+      onUserUpdate(refreshedUser)
+    } catch (error) {
+      setSettingsError(error.message)
+    } finally {
+      setIsRefreshingUser(false)
+    }
+  }
+
+  const handleCloseSettingsModal = () => {
+    setSettingsError('')
+    setSettingsFeedback('')
+    setTelegramLinkCodeData(null)
+    setIsSettingsModalOpen(false)
   }
 
   const openTodayModal = async () => {
@@ -310,6 +366,43 @@ function DashboardPage({ user, onLogout }) {
     }
   }
 
+  const handleGenerateTelegramCode = async () => {
+    setSettingsError('')
+    setSettingsFeedback('')
+    setIsGeneratingLinkCode(true)
+
+    try {
+      const data = await generateTelegramLinkCode(user.id)
+      setTelegramLinkCodeData(data)
+      setSettingsFeedback('Nuevo código de vinculación generado correctamente.')
+    } catch (error) {
+      setSettingsError(error.message)
+    } finally {
+      setIsGeneratingLinkCode(false)
+    }
+  }
+
+  const handleUnlinkTelegram = async () => {
+    setSettingsError('')
+    setSettingsFeedback('')
+    setIsUnlinkingTelegram(true)
+
+    try {
+      await unlinkTelegram(user.id)
+      setIsTelegramLinked(false)
+      setTelegramLinkCodeData(null)
+      setSettingsFeedback('Tu cuenta de Telegram se ha desvinculado correctamente.')
+      onUserUpdate({
+        ...user,
+        externalId: null,
+      })
+    } catch (error) {
+      setSettingsError(error.message)
+    } finally {
+      setIsUnlinkingTelegram(false)
+    }
+  }
+
   return (
     <main
       className="dashboard-shell"
@@ -318,16 +411,14 @@ function DashboardPage({ user, onLogout }) {
       <section className="dashboard-hero">
         <div className="dashboard-copy">
           <p className="eyebrow">KakeBot</p>
-          <h1>Tu espacio para registrar y revisar tus gastos con calma.</h1>
+          <h1>Tu espacio para registrar y revisar tus gastos.</h1>
+          <div className="dashboard-mascot">
+            <img src={mascotImage} alt="Mascota de KakeBot" className="dashboard-mascot-image" />
+          </div>
           <p className="dashboard-text">
-            Has entrado como <strong>{user.username}</strong>. Desde aquí podrás
-            registrar movimientos nuevos y revisar tu economía del día, del mes
-            o por categorías.
+            Has entrado como <strong>{user.username}</strong>. Esta es tu página
+            de gestión de gastos y configuración.
           </p>
-        </div>
-
-        <div className="dashboard-mascot">
-          <img src={mascotImage} alt="Mascota de KakeBot" className="dashboard-mascot-image" />
         </div>
       </section>
 
@@ -397,6 +488,9 @@ function DashboardPage({ user, onLogout }) {
         </div>
 
         <div className="dashboard-footer-actions">
+          <button className="submit-button secondary-button" onClick={handleOpenSettingsModal} type="button">
+            Configuración
+          </button>
           <button className="submit-button secondary-button" onClick={onLogout} type="button">
             Cerrar sesión
           </button>
@@ -744,6 +838,94 @@ function DashboardPage({ user, onLogout }) {
               <button
                 className="submit-button secondary-button modal-secondary-button"
                 onClick={handleCloseInsightsModal}
+                type="button"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isSettingsModalOpen ? (
+        <div className="modal-overlay" onClick={handleCloseSettingsModal} role="presentation">
+          <div
+            className="expense-modal insights-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-modal-title"
+            style={{ '--modal-background': `url(${lightChatBackground})` }}
+          >
+            <div className="expense-modal-header">
+              <div>
+                <p className="card-label">Configuración</p>
+                <h2 id="settings-modal-title">Telegram y vinculación</h2>
+              </div>
+            </div>
+
+            <p className="telegram-link-copy">
+              {isTelegramLinked
+                ? 'Tu chat de Telegram está vinculado a esta cuenta. Desde aquí puedes generar un nuevo código o desvincularlo.'
+                : 'Esta cuenta no tiene Telegram vinculado ahora mismo. Puedes generar un nuevo código para conectarla cuando quieras.'}
+            </p>
+
+            {isRefreshingUser ? (
+              <p className="insights-empty-state">Comprobando el estado actual de tu cuenta...</p>
+            ) : null}
+
+            {settingsError ? <p className="auth-error-message">{settingsError}</p> : null}
+            {settingsFeedback ? <p className="auth-success-message">{settingsFeedback}</p> : null}
+
+            {telegramLinkCodeData ? (
+              <>
+                <div className="telegram-code-box settings-code-box">
+                  <span>{telegramLinkCodeData.code}</span>
+                </div>
+
+                <p className="telegram-expiration-note">
+                  {formatExpiration(telegramLinkCodeData.expiresAt)}
+                </p>
+
+                <div className="telegram-steps">
+                  <p className="telegram-steps-title">Cómo usarlo</p>
+                  <ol>
+                    <li>Busca <code>@Kakebotapp_bot</code> en Telegram.</li>
+                    <li>Abre el chat del bot.</li>
+                    <li>Escribe este comando:</li>
+                  </ol>
+                </div>
+
+                <div className="telegram-command-box">
+                  <code>/link {telegramLinkCodeData.code}</code>
+                </div>
+              </>
+            ) : null}
+
+            <div className="settings-actions">
+              <button
+                className="submit-button"
+                disabled={isGeneratingLinkCode || isRefreshingUser}
+                onClick={handleGenerateTelegramCode}
+                type="button"
+              >
+                {isGeneratingLinkCode ? 'Generando código...' : 'Generar nuevo código'}
+              </button>
+
+              <button
+                className="submit-button danger-button"
+                disabled={isUnlinkingTelegram || isRefreshingUser}
+                onClick={handleUnlinkTelegram}
+                type="button"
+              >
+                {isUnlinkingTelegram ? 'Desvinculando...' : 'Desvincular Telegram'}
+              </button>
+            </div>
+
+            <div className="expense-modal-actions single-action">
+              <button
+                className="submit-button secondary-button modal-secondary-button"
+                onClick={handleCloseSettingsModal}
                 type="button"
               >
                 Cerrar

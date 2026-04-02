@@ -77,6 +77,17 @@ public class UserService {
         return userMapper.toResponseDto(updatedUser);
     }
 
+    public void unlinkTelegram(Long userId) {
+        User user = resolveUserOrThrow(userId);
+
+        if (user.getExternalId() == null || user.getExternalId().isBlank()) {
+            throw new InvalidUserRequestException("No hay cuenta de Telegram vinculada");
+        }
+
+        user.setExternalId(null);
+        userRepository.save(user);
+    }
+
     private User resolveUserOrThrow(Long userId) {
         if (userId == null) {
             throw new InvalidUserRequestException("El id de usuario es obligatorio");

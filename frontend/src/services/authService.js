@@ -3,6 +3,14 @@ const JSON_HEADERS = {
 }
 
 async function parseJsonResponse(response) {
+  if (response.status === 204 || response.status === 205) {
+    if (!response.ok) {
+      throw new Error('Ha ocurrido un error inesperado.')
+    }
+
+    return null
+  }
+
   const contentType = response.headers.get('content-type') ?? ''
   const hasJsonBody = contentType.includes('application/json')
   const data = hasJsonBody ? await response.json() : null
@@ -36,6 +44,16 @@ export async function loginUser({ username, password }) {
   return parseJsonResponse(response)
 }
 
+export async function getCurrentUser(userId) {
+  const response = await fetch('/api/users/me', {
+    headers: {
+      'X-User-Id': String(userId),
+    },
+  })
+
+  return parseJsonResponse(response)
+}
+
 export async function generateTelegramLinkCode(userId) {
   const response = await fetch('/api/users/telegram-link-code', {
     method: 'POST',
@@ -45,4 +63,15 @@ export async function generateTelegramLinkCode(userId) {
   })
 
   return parseJsonResponse(response)
+}
+
+export async function unlinkTelegram(userId) {
+  const response = await fetch('/api/users/me/telegram-link', {
+    method: 'DELETE',
+    headers: {
+      'X-User-Id': String(userId),
+    },
+  })
+
+  await parseJsonResponse(response)
 }

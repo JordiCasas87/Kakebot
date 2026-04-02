@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
+import explanationBackground from '../assets/backgrounds/fondoExplicacionClaro.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
 import mascotAnimation from '../assets/animations/kakebotAnimHappy.mp4'
+import originalKakeboImage from '../assets/images/kakebo.jpg'
+import notebookIcon from '../assets/images/iconoLibreta.png'
 import { generateTelegramLinkCode, loginUser, registerUser } from '../services/authService.js'
 import '../App.css'
 
@@ -12,6 +15,7 @@ const MODES = {
 
 function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
   const [mode, setMode] = useState(null)
+  const [isKakeboModalOpen, setIsKakeboModalOpen] = useState(false)
   const [registerUsername, setRegisterUsername] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
   const [registerPasswordConfirmation, setRegisterPasswordConfirmation] = useState('')
@@ -137,6 +141,27 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
     }
   }, [])
 
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow
+    const previousTouchAction = document.body.style.touchAction
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    const previousHtmlTouchAction = document.documentElement.style.touchAction
+
+    if (isKakeboModalOpen) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
+      document.documentElement.style.touchAction = 'none'
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.body.style.touchAction = previousTouchAction
+      document.documentElement.style.overflow = previousHtmlOverflow
+      document.documentElement.style.touchAction = previousHtmlTouchAction
+    }
+  }, [isKakeboModalOpen])
+
   return (
     <main className="app-shell">
       <section
@@ -163,6 +188,18 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
           >
             <source src={mascotAnimation} type="video/mp4" />
           </video>
+        </div>
+
+        <div className="hero-kakebo-entry" aria-label="Acceso a información sobre KakeBot">
+          <button
+            className="hero-kakebo-icon"
+            type="button"
+            aria-label="What is KakeBot?"
+            onClick={() => setIsKakeboModalOpen(true)}
+          >
+            <img src={notebookIcon} alt="" />
+          </button>
+          <span className="hero-kakebo-text">What&apos;s KakeBot?</span>
         </div>
       </section>
 
@@ -273,6 +310,57 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
           </p>
         </div>
       </section>
+
+      {isKakeboModalOpen ? (
+        <div className="modal-overlay" onClick={() => setIsKakeboModalOpen(false)} role="presentation">
+          <div
+            className="expense-modal kakebo-info-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="kakebo-info-title"
+            style={{ '--modal-background': `url(${explanationBackground})` }}
+          >
+            <div className="expense-modal-header kakebo-info-header">
+              <div className="kakebo-info-title-wrap">
+                <div>
+                  <h2 id="kakebo-info-title">¿Qué es KakeBot?</h2>
+                </div>
+              </div>
+            </div>
+
+            <div className="kakebo-info-content">
+              <p className="kakebo-info-copy">
+                <strong>Kakebo</strong> es un método japonés de control de gastos
+                basado en anotar lo que compras y revisarlo con calma. La idea no
+                es solo registrar números, sino tomar conciencia de tus hábitos y
+                gastar con más intención.
+              </p>
+
+              <div className="kakebo-info-visual">
+                <img src={originalKakeboImage} alt="Ejemplo de un Kakebo original" className="kakebo-info-image" />
+              </div>
+
+              <p className="kakebo-info-copy">
+                <strong>KakeBot</strong> toma esa inspiración y la adapta a una
+                experiencia actual: registro rápido desde Telegram y revisión más
+                tranquila desde la app web, manteniendo el espíritu de observar,
+                ordenar y entender mejor tus gastos.
+              </p>
+            </div>
+
+            <div className="expense-modal-actions single-action">
+              <button
+                className="submit-button secondary-button modal-secondary-button"
+                onClick={() => setIsKakeboModalOpen(false)}
+                type="button"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

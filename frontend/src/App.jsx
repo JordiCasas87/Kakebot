@@ -43,6 +43,10 @@ function App() {
     setScreen('auth')
   }
 
+  const handleCurrentUserUpdate = (updatedUser) => {
+    setCurrentUser(updatedUser)
+  }
+
   useEffect(() => {
     if (currentUser) {
       window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
@@ -53,7 +57,7 @@ function App() {
   }, [currentUser])
 
   if (screen === 'dashboard' && currentUser) {
-    return <DashboardPage user={currentUser} onLogout={handleLogout} />
+    return <DashboardPage user={currentUser} onLogout={handleLogout} onUserUpdate={handleCurrentUserUpdate} />
   }
 
   if (screen === 'telegram-link' && telegramLinkData) {

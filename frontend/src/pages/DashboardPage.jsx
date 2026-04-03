@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
-import mascotImage from '../assets/images/kakebotBlanco.png'
+import botHappyLoopVideo from '../assets/animations/botHappyloop.mp4'
+import kakebotTextImage from '../assets/images/kakebotTexto.png'
 import { generateTelegramLinkCode, getCurrentUser, unlinkTelegram } from '../services/authService.js'
 import {
   createExpense,
@@ -463,8 +464,20 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
         <div className="dashboard-copy">
           <p className="eyebrow">KakeBot</p>
           <h1>Tu espacio para registrar y revisar tus gastos.</h1>
-          <div className="dashboard-mascot">
-            <img src={mascotImage} alt="Mascota de KakeBot" className="dashboard-mascot-image" />
+          <div className="dashboard-mascot-band">
+            <div className="dashboard-mascot">
+              <video
+                className="dashboard-mascot-video"
+                autoPlay
+                loop
+                muted
+                playsInline
+                aria-label="Mascota animada de KakeBot"
+              >
+                <source src={botHappyLoopVideo} type="video/mp4" />
+              </video>
+            </div>
+            <img src={kakebotTextImage} alt="KakeBot" className="dashboard-mascot-logo" />
           </div>
           <p className="dashboard-text">
             Has entrado como <strong>{user.username}</strong>. Esta es tu página

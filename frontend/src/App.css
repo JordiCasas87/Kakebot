@@ -524,7 +524,7 @@
 
 .dashboard-copy h1 {
   margin: 0;
-  max-width: 19ch;
+  max-width: 21ch;
   font-family: 'Fredoka', system-ui, sans-serif;
   font-size: clamp(1.85rem, 2.7vw, 3rem);
   line-height: 0.98;
@@ -546,18 +546,64 @@
   justify-content: center;
 }
 
+.dashboard-mascot-band {
+  position: relative;
+  width: 100%;
+  padding: 0.75rem 0 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  isolation: isolate;
+}
+
+.dashboard-mascot-band::before {
+  content: '';
+  position: absolute;
+  top: -2.1rem;
+  bottom: -0.25rem;
+  left: calc(50% - 50vw);
+  right: calc(50% - 50vw);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(252, 251, 247, 0) 0%,
+      rgba(252, 251, 247, 0.68) 20%,
+      rgba(252, 251, 247, 0.98) 42%,
+      rgba(252, 251, 247, 0.995) 68%,
+      rgba(252, 251, 247, 0.9) 84%,
+      rgba(252, 251, 247, 0) 100%
+    );
+  z-index: -1;
+  pointer-events: none;
+}
+
 .dashboard-copy {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.dashboard-mascot-image {
+.dashboard-mascot-image,
+.dashboard-mascot-video {
   width: min(20.5rem, 64%);
   object-fit: contain;
-  filter: drop-shadow(0 18px 30px rgba(96, 66, 18, 0.16));
+  border-radius: 1.9rem;
+  filter: contrast(1.08) drop-shadow(0 18px 30px rgba(96, 66, 18, 0.16));
   mask-image: radial-gradient(circle at center, black 34%, rgba(0, 0, 0, 0.86) 48%, rgba(0, 0, 0, 0.66) 66%, rgba(0, 0, 0, 0.34) 82%, transparent 100%);
   -webkit-mask-image: radial-gradient(circle at center, black 34%, rgba(0, 0, 0, 0.86) 48%, rgba(0, 0, 0, 0.66) 66%, rgba(0, 0, 0, 0.34) 82%, transparent 100%);
+}
+
+.dashboard-mascot-logo {
+  width: min(13.2rem, 41.2%);
+  display: block;
+  margin-top: 0.9rem;
+  border-radius: 1rem;
+  opacity: 0.9;
+  filter:
+    brightness(1.04)
+    contrast(0.92)
+    saturate(0.88)
+    drop-shadow(0 10px 18px rgba(96, 66, 18, 0.1));
 }
 
 .dashboard-content {
@@ -672,6 +718,7 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
   z-index: 50;
+  animation: modalOverlayIn 200ms ease-out both;
 }
 
 .expense-modal {
@@ -688,6 +735,39 @@
     0 7px 0 rgba(22, 15, 4, 0.32);
   position: relative;
   max-width: 100%;
+  transform-origin: center bottom;
+  animation: modalCardIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes modalOverlayIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes modalCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.975);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .expense-modal {
+    animation: none;
+  }
 }
 
 .expense-modal-header {
@@ -974,7 +1054,7 @@
   }
 
   .dashboard-copy h1 {
-    max-width: 14ch;
+    max-width: 17ch;
   }
 
   .dashboard-primary-card {
@@ -1041,8 +1121,23 @@
     margin-top: 0.1rem;
   }
 
-  .dashboard-mascot-image {
+  .dashboard-mascot-band {
+    padding: 0.55rem 0 0.15rem;
+  }
+
+  .dashboard-mascot-band::before {
+    top: -1.65rem;
+    bottom: -0.15rem;
+  }
+
+  .dashboard-mascot-image,
+  .dashboard-mascot-video {
     width: min(15rem, 58%);
+  }
+
+  .dashboard-mascot-logo {
+    width: min(9.7rem, 37.5%);
+    margin-top: 0.7rem;
   }
 
   .dashboard-content {

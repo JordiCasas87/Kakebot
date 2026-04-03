@@ -7,6 +7,7 @@ import {
   createExpense,
   deleteExpense,
   getCategoryTotalsByPeriod,
+  getMonthExpenses,
   getMonthCategoryTotals,
   getMonthTotal,
   getRecentExpenses,
@@ -22,7 +23,7 @@ const reviewOptions = [
   },
   {
     title: 'Mes y categorías',
-    description: 'Revisa lo que llevas gastado este mes.',
+    description: 'Revisa lo que llevas gastado este mes y consulta gastos por categorías.',
   },
   {
     title: 'Por período',
@@ -144,8 +145,10 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [isCreatingExpense, setIsCreatingExpense] = useState(false)
   const [todayExpenses, setTodayExpenses] = useState([])
   const [todayTotal, setTodayTotalValue] = useState(0)
+  const [monthExpenses, setMonthExpenses] = useState([])
   const [monthCategoryTotals, setMonthCategoryTotals] = useState([])
   const [monthTotal, setMonthTotalValue] = useState(0)
+  const [selectedMonthCategory, setSelectedMonthCategory] = useState(null)
   const [periodMonth, setPeriodMonth] = useState(currentDate.getMonth() + 1)
   const [periodYear, setPeriodYear] = useState(currentDate.getFullYear())
   const [periodCategoryTotals, setPeriodCategoryTotals] = useState([])
@@ -197,6 +200,7 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const handleCloseInsightsModal = () => {
     setActiveInsightsModal(null)
     setInsightsError('')
+    setSelectedMonthCategory(null)
   }
 
   const handleOpenSettingsModal = async () => {
@@ -249,13 +253,16 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
     setInsightsError('')
     setIsLoadingInsights(true)
     setActiveInsightsModal('month')
+    setSelectedMonthCategory(null)
 
     try {
-      const [categoryTotals, totalResponse] = await Promise.all([
+      const [expenses, categoryTotals, totalResponse] = await Promise.all([
+        getMonthExpenses(user.id),
         getMonthCategoryTotals(user.id),
         getMonthTotal(user.id),
       ])
 
+      setMonthExpenses(expenses)
       setMonthCategoryTotals(categoryTotals)
       setMonthTotalValue(totalResponse.total)
     } catch (error) {
@@ -366,6 +373,46 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
     }
   }
 
+  const handleSelectMonthCategory = (categoryKey) => {
+    setSelectedMonthCategory(categoryKey)
+  }
+
+  const handleDeleteMonthExpense = async (expenseId) => {
+    setInsightsError('')
+    setDeletingExpenseId(expenseId)
+
+    try {
+      await deleteExpense(user.id, expenseId)
+
+      const remainingExpenses = monthExpenses.filter((expense) => expense.id !== expenseId)
+      setMonthExpenses(remainingExpenses)
+
+      const updatedCategoryTotals = monthCategoryTotals.map((item) => {
+        if (item.category !== selectedMonthCategory) {
+          return item
+        }
+
+        const nextTotal = remainingExpenses
+          .filter((expense) => expense.category === selectedMonthCategory)
+          .reduce((sum, expense) => sum + Number(expense.amount ?? 0), 0)
+
+        return {
+          ...item,
+          total: nextTotal,
+        }
+      })
+
+      setMonthCategoryTotals(updatedCategoryTotals)
+      setMonthTotalValue(
+        remainingExpenses.reduce((sum, expense) => sum + Number(expense.amount ?? 0), 0),
+      )
+    } catch (error) {
+      setInsightsError(error.message)
+    } finally {
+      setDeletingExpenseId(null)
+    }
+  }
+
   const handleGenerateTelegramCode = async () => {
     setSettingsError('')
     setSettingsFeedback('')
@@ -381,6 +428,10 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
       setIsGeneratingLinkCode(false)
     }
   }
+
+  const selectedMonthCategoryExpenses = selectedMonthCategory
+    ? monthExpenses.filter((expense) => expense.category === selectedMonthCategory)
+    : []
 
   const handleUnlinkTelegram = async () => {
     setSettingsError('')
@@ -429,8 +480,7 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
             <h2>Registrar gasto</h2>
           </div>
           <p className="dashboard-card-text">
-            Este será el acceso rápido al formulario principal para anotar un
-            gasto nuevo en la app.
+            Registra tus gastos también a través de la app de forma rápida y sencilla.
           </p>
           <button className="submit-button" onClick={handleOpenExpenseModal} type="button">
             Registrar gasto
@@ -670,8 +720,17 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 <div className="month-summary-list">
                   {monthCategoryTotals.map((item) => (
                     <article
-                      className={`month-summary-card ${categoryTheme[item.category] ?? 'theme-other'}`}
+                      className={`month-summary-card ${categoryTheme[item.category] ?? 'theme-other'} review-card-clickable`}
                       key={item.category}
+                      onClick={() => handleSelectMonthCategory(item.category)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handleSelectMonthCategory(item.category)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <span>{categoryLabelMap[item.category] ?? item.category}</span>
                       <strong>{formatEuro(item.total)}</strong>
@@ -683,6 +742,48 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                   <span>Total del mes</span>
                   <strong>{formatEuro(monthTotal)}</strong>
                 </div>
+
+                {selectedMonthCategory ? (
+                  <div className="month-category-detail">
+                    <p className="month-category-detail-title">
+                      Gastos de {categoryLabelMap[selectedMonthCategory] ?? selectedMonthCategory}
+                    </p>
+
+                    {selectedMonthCategoryExpenses.length ? (
+                      <div className="today-expenses-list">
+                        {selectedMonthCategoryExpenses.map((expense) => (
+                          <article
+                            className={`today-expense-card ${categoryTheme[expense.category] ?? 'theme-other'}`}
+                            key={expense.id}
+                          >
+                            <div className="today-expense-header">
+                              <span>{categoryLabelMap[expense.category] ?? expense.category}</span>
+                              <div className="expense-card-amount-block">
+                                <strong>{formatEuro(expense.amount)}</strong>
+                                <button
+                                  className="expense-delete-button"
+                                  disabled={deletingExpenseId === expense.id}
+                                  onClick={() => handleDeleteMonthExpense(expense.id)}
+                                  type="button"
+                                >
+                                  {deletingExpenseId === expense.id ? 'Borrando...' : 'Eliminar'}
+                                </button>
+                              </div>
+                            </div>
+                            <p>{expense.description}</p>
+                            <div className="expense-card-footer">
+                              <small>{formatShortDate(expense.registeredAt)} · {formatTime(expense.registeredAt)}</small>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="insights-empty-state">
+                        No hay gastos de {categoryLabelMap[selectedMonthCategory] ?? selectedMonthCategory} este mes.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
               </>
             ) : null}
 

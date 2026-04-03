@@ -752,6 +752,19 @@
   justify-items: center;
 }
 
+.month-category-detail {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.month-category-detail-title {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  color: #3d2b0b;
+}
+
 .today-expense-card,
 .month-summary-card,
 .totals-summary-card {

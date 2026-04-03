@@ -45,6 +45,16 @@ export async function getTodayTotal(userId) {
   return parseJsonResponse(response)
 }
 
+export async function getMonthExpenses(userId) {
+  const response = await fetch('/api/expenses/month', {
+    headers: {
+      'X-User-Id': String(userId),
+    },
+  })
+
+  return parseJsonResponse(response)
+}
+
 export async function getMonthCategoryTotals(userId) {
   const response = await fetch('/api/expenses/total/month/by-category', {
     headers: {

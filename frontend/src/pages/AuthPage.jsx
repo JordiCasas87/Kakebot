@@ -5,6 +5,7 @@ import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
 import mascotAnimation from '../assets/animations/kakebotAnimHappy.mp4'
 import originalKakeboImage from '../assets/images/kakebo.jpg'
 import notebookIcon from '../assets/images/iconoLibreta.png'
+import AnimatedModal from '../components/AnimatedModal.jsx'
 import { generateTelegramLinkCode, loginUser, registerUser } from '../services/authService.js'
 import '../App.css'
 
@@ -311,16 +312,13 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
         </div>
       </section>
 
-      {isKakeboModalOpen ? (
-        <div className="modal-overlay" onClick={() => setIsKakeboModalOpen(false)} role="presentation">
-          <div
-            className="expense-modal kakebo-info-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="kakebo-info-title"
-            style={{ '--modal-background': `url(${explanationBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={isKakeboModalOpen}
+        onClose={() => setIsKakeboModalOpen(false)}
+        className="kakebo-info-modal"
+        labelledBy="kakebo-info-title"
+        background={explanationBackground}
+      >
             <div className="expense-modal-header kakebo-info-header">
               <div className="kakebo-info-title-wrap">
                 <div>
@@ -358,9 +356,7 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
     </main>
   )
 }

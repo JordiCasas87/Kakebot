@@ -3,7 +3,7 @@ package com.jordi.kakebot.user.service;
 import com.jordi.kakebot.expense.enums.ExpenseCategory;
 import com.jordi.kakebot.expense.model.Expense;
 import com.jordi.kakebot.expense.repository.ExpenseRepository;
-import com.jordi.kakebot.telegram.service.TelegramService;
+import com.jordi.kakebot.telegram.service.TelegramAlertService;
 import com.jordi.kakebot.user.model.User;
 import com.jordi.kakebot.user.model.UserCategoryLimit;
 import com.jordi.kakebot.user.repository.UserCategoryLimitRepository;
@@ -19,16 +19,16 @@ public class CategoryLimitAlertService {
 
     private final UserCategoryLimitRepository userCategoryLimitRepository;
     private final ExpenseRepository expenseRepository;
-    private final TelegramService telegramService;
+    private final TelegramAlertService telegramAlertService;
 
     public CategoryLimitAlertService(
             UserCategoryLimitRepository userCategoryLimitRepository,
             ExpenseRepository expenseRepository,
-            TelegramService telegramService
+            TelegramAlertService telegramAlertService
     ) {
         this.userCategoryLimitRepository = userCategoryLimitRepository;
         this.expenseRepository = expenseRepository;
-        this.telegramService = telegramService;
+        this.telegramAlertService = telegramAlertService;
     }
 
     public void processLimitAlertAfterExpenseCreated(Expense expense) {
@@ -58,7 +58,7 @@ public class CategoryLimitAlertService {
             return;
         }
 
-        telegramService.sendCategoryLimitExceededAlert(
+        telegramAlertService.sendCategoryLimitExceededAlert(
                 user,
                 category,
                 categoryLimit.getMonthlyLimit(),

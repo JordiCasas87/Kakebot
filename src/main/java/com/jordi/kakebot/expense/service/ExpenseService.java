@@ -13,6 +13,7 @@ import com.jordi.kakebot.expense.model.Expense;
 import com.jordi.kakebot.expense.repository.ExpenseRepository;
 import com.jordi.kakebot.user.model.User;
 import com.jordi.kakebot.user.repository.UserRepository;
+import com.jordi.kakebot.user.service.CategoryLimitAlertService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -30,12 +31,20 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
+    private final CategoryLimitAlertService categoryLimitAlertService;
     private final Clock clock;
 
-    public ExpenseService(ExpenseRepository expenseRepository, UserRepository userRepository, ExpenseMapper expenseMapper, Clock clock) {
+    public ExpenseService(
+            ExpenseRepository expenseRepository,
+            UserRepository userRepository,
+            ExpenseMapper expenseMapper,
+            CategoryLimitAlertService categoryLimitAlertService,
+            Clock clock
+    ) {
         this.expenseRepository = expenseRepository;
         this.userRepository = userRepository;
         this.expenseMapper = expenseMapper;
+        this.categoryLimitAlertService = categoryLimitAlertService;
         this.clock = clock;
     }
 
@@ -45,6 +54,7 @@ public class ExpenseService {
         Expense expense = expenseMapper.toEntity(request, user, LocalDateTime.now(clock));
 
         Expense savedExpense = expenseRepository.save(expense);
+        categoryLimitAlertService.processLimitAlertAfterExpenseCreated(savedExpense);
         return expenseMapper.toResponseDto(savedExpense);
     }
 

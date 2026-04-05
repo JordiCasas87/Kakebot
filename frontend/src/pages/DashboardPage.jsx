@@ -5,6 +5,7 @@ import botHappyLoopVideo from '../assets/animations/botHappyloop.mp4'
 import kakebotTextImage from '../assets/images/kakebotTexto.png'
 import AnimatedModal from '../components/AnimatedModal.jsx'
 import { generateTelegramLinkCode, getCurrentUser, unlinkTelegram } from '../services/authService.js'
+import { getCategoryLimits, updateCategoryLimit } from '../services/categoryLimitService.js'
 import {
   createExpense,
   deleteExpense,
@@ -38,12 +39,17 @@ const reviewOptions = [
 ]
 
 const expenseCategoryOptions = [
-  { value: 'casa', label: 'Casa' },
-  { value: 'comida', label: 'Comida' },
-  { value: 'transporte', label: 'Transporte' },
-  { value: 'ocio', label: 'Ocio' },
-  { value: 'otros', label: 'Otros' },
+  { value: 'casa', label: 'Casa', apiCategory: 'HOME' },
+  { value: 'comida', label: 'Comida', apiCategory: 'FOOD' },
+  { value: 'transporte', label: 'Transporte', apiCategory: 'TRANSPORT' },
+  { value: 'ocio', label: 'Ocio', apiCategory: 'LEISURE' },
+  { value: 'otros', label: 'Otros', apiCategory: 'OTHER' },
 ]
+
+const categoryValueByApiCategory = expenseCategoryOptions.reduce((mapping, option) => {
+  mapping[option.apiCategory] = option.value
+  return mapping
+}, {})
 
 const categoryTheme = {
   HOME: 'theme-home',
@@ -147,10 +153,21 @@ function formatExpiration(expiresAt) {
   })}.`
 }
 
+function createEmptyCategoryLimits() {
+  return {
+    casa: '',
+    comida: '',
+    transporte: '',
+    ocio: '',
+    otros: '',
+  }
+}
+
 function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false)
   const [activeInsightsModal, setActiveInsightsModal] = useState(null)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [isCategoryLimitsModalOpen, setIsCategoryLimitsModalOpen] = useState(false)
   const [dashboardBotMessage] = useState(() => {
     const randomIndex = Math.floor(Math.random() * dashboardBotMessages.length)
     return dashboardBotMessages[randomIndex]
@@ -180,11 +197,20 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [isGeneratingLinkCode, setIsGeneratingLinkCode] = useState(false)
   const [isUnlinkingTelegram, setIsUnlinkingTelegram] = useState(false)
   const [isRefreshingUser, setIsRefreshingUser] = useState(false)
+  const [isLoadingCategoryLimits, setIsLoadingCategoryLimits] = useState(false)
+  const [isSavingCategoryLimits, setIsSavingCategoryLimits] = useState(false)
+  const [categoryLimitsError, setCategoryLimitsError] = useState('')
+  const [categoryLimitsFeedback, setCategoryLimitsFeedback] = useState('')
+  const [categoryLimitsForm, setCategoryLimitsForm] = useState(createEmptyCategoryLimits)
   const [telegramLinkCodeData, setTelegramLinkCodeData] = useState(null)
   const [isTelegramLinked, setIsTelegramLinked] = useState(Boolean(user.externalId))
 
   useEffect(() => {
-    const hasOpenModal = isExpenseModalOpen || activeInsightsModal !== null || isSettingsModalOpen
+    const hasOpenModal =
+      isExpenseModalOpen
+      || activeInsightsModal !== null
+      || isSettingsModalOpen
+      || isCategoryLimitsModalOpen
     const previousBodyOverflow = document.body.style.overflow
     const previousTouchAction = document.body.style.touchAction
 
@@ -197,7 +223,7 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
       document.body.style.overflow = previousBodyOverflow
       document.body.style.touchAction = previousTouchAction
     }
-  }, [activeInsightsModal, isExpenseModalOpen, isSettingsModalOpen])
+  }, [activeInsightsModal, isCategoryLimitsModalOpen, isExpenseModalOpen, isSettingsModalOpen])
 
   useEffect(() => {
     setIsTelegramLinked(Boolean(user.externalId))
@@ -245,6 +271,83 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
     setSettingsFeedback('')
     setTelegramLinkCodeData(null)
     setIsSettingsModalOpen(false)
+  }
+
+  const populateCategoryLimitsForm = (limits) => {
+    const nextForm = createEmptyCategoryLimits()
+
+    limits.forEach((limit) => {
+      const categoryKey = categoryValueByApiCategory[limit.category]
+
+      if (categoryKey in nextForm) {
+        nextForm[categoryKey] = String(limit.monthlyLimit ?? '')
+      }
+    })
+
+    setCategoryLimitsForm(nextForm)
+  }
+
+  const handleOpenCategoryLimitsModal = async () => {
+    setCategoryLimitsError('')
+    setCategoryLimitsFeedback('')
+    setIsCategoryLimitsModalOpen(true)
+    setIsLoadingCategoryLimits(true)
+
+    try {
+      const limits = await getCategoryLimits(user.id)
+      populateCategoryLimitsForm(limits)
+    } catch (error) {
+      setCategoryLimitsError(error.message)
+      setCategoryLimitsForm(createEmptyCategoryLimits())
+    } finally {
+      setIsLoadingCategoryLimits(false)
+    }
+  }
+
+  const handleCloseCategoryLimitsModal = () => {
+    setCategoryLimitsError('')
+    setCategoryLimitsFeedback('')
+    setIsCategoryLimitsModalOpen(false)
+  }
+
+  const handleCategoryLimitChange = (categoryKey, value) => {
+    setCategoryLimitsForm((current) => ({
+      ...current,
+      [categoryKey]: value,
+    }))
+  }
+
+  const handleCategoryLimitsSubmit = async (event) => {
+    event.preventDefault()
+    setCategoryLimitsError('')
+    setCategoryLimitsFeedback('')
+
+    const limitsToSave = Object.entries(categoryLimitsForm)
+      .map(([categoryKey, monthlyLimit]) => ({
+        categoryKey,
+        monthlyLimit: monthlyLimit.trim(),
+      }))
+      .filter((item) => item.monthlyLimit !== '')
+
+    if (!limitsToSave.length) {
+      setCategoryLimitsError('Introduce al menos un tope mensual para guardar la configuración.')
+      return
+    }
+
+    setIsSavingCategoryLimits(true)
+
+    try {
+      const savedLimits = await Promise.all(
+        limitsToSave.map((item) => updateCategoryLimit(user.id, item.categoryKey, item.monthlyLimit)),
+      )
+
+      populateCategoryLimitsForm(savedLimits)
+      setCategoryLimitsFeedback('Tus topes mensuales se han guardado correctamente.')
+    } catch (error) {
+      setCategoryLimitsError(error.message)
+    } finally {
+      setIsSavingCategoryLimits(false)
+    }
   }
 
   const openTodayModal = async () => {
@@ -511,7 +614,6 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
       <section className="dashboard-content">
         <div className="dashboard-card dashboard-primary-card">
           <div>
-            <p className="card-label">Acción principal</p>
             <h2>Registrar gasto</h2>
           </div>
           <p className="dashboard-card-text">
@@ -570,6 +672,18 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
               </article>
             ))}
           </div>
+        </div>
+
+        <div className="dashboard-limits-callout">
+          <div>
+            <h2>Configura tus topes mensuales</h2>
+            <p className="dashboard-card-text">
+              Define cuánto quieres gastar por categoría y recibe avisos cuando te acerques demasiado.
+            </p>
+          </div>
+          <button className="submit-button dashboard-limits-button" onClick={handleOpenCategoryLimitsModal} type="button">
+            Configura tus topes mensuales
+          </button>
         </div>
 
         <div className="dashboard-footer-actions">
@@ -955,6 +1069,69 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
+      </AnimatedModal>
+
+      <AnimatedModal
+        isOpen={isCategoryLimitsModalOpen}
+        onClose={handleCloseCategoryLimitsModal}
+        className="insights-modal limits-modal"
+        labelledBy="category-limits-modal-title"
+        background={lightChatBackground}
+      >
+            <div className="expense-modal-header">
+              <div>
+                <h2 id="category-limits-modal-title">Configura tus topes mensuales</h2>
+              </div>
+            </div>
+
+            <p className="telegram-link-copy">
+              Define cuánto quieres gastar al mes en cada categoría. Más adelante usaremos estos topes para avisos y estados del bot.
+            </p>
+
+            {isLoadingCategoryLimits ? (
+              <p className="insights-empty-state">Cargando tus topes actuales...</p>
+            ) : null}
+
+            {!isLoadingCategoryLimits ? (
+              <form className="category-limits-form" onSubmit={handleCategoryLimitsSubmit}>
+                {expenseCategoryOptions.map((option) => (
+                  <label
+                    className={`field category-limit-field ${categoryTheme[option.apiCategory] ?? 'theme-other'}`}
+                    key={option.value}
+                  >
+                    <span>{option.label}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Ej. 250"
+                      value={categoryLimitsForm[option.value]}
+                      onChange={(event) => handleCategoryLimitChange(option.value, event.target.value)}
+                    />
+                  </label>
+                ))}
+
+                {categoryLimitsError ? <p className="auth-error-message">{categoryLimitsError}</p> : null}
+                {categoryLimitsFeedback ? <p className="auth-success-message">{categoryLimitsFeedback}</p> : null}
+
+                <p className="category-limits-note">
+                  Deja en blanco las categorías que todavía no quieras configurar.
+                </p>
+
+                <div className="expense-modal-actions">
+                  <button className="submit-button modal-primary-button" disabled={isSavingCategoryLimits} type="submit">
+                    {isSavingCategoryLimits ? 'Guardando topes...' : 'Guardar topes'}
+                  </button>
+
+                  <button
+                    className="submit-button secondary-button modal-secondary-button"
+                    onClick={handleCloseCategoryLimitsModal}
+                    type="button"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </form>
+            ) : null}
       </AnimatedModal>
 
       <AnimatedModal

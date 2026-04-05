@@ -3,6 +3,7 @@ import chatBackground from '../assets/backgrounds/fondoChat.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
 import botHappyLoopVideo from '../assets/animations/botHappyloop.mp4'
 import kakebotTextImage from '../assets/images/kakebotTexto.png'
+import AnimatedModal from '../components/AnimatedModal.jsx'
 import { generateTelegramLinkCode, getCurrentUser, unlinkTelegram } from '../services/authService.js'
 import {
   createExpense,
@@ -77,6 +78,18 @@ const monthOptions = [
 
 const currentDate = new Date()
 const periodYearOptions = Array.from({ length: 5 }, (_, index) => currentDate.getFullYear() - index)
+const dashboardBotMessages = [
+  'Hola. He hecho números y creo que hoy toca ahorrar un poquito más...',
+  'He revisado la libreta mental y sigo pensando en tus próximos gastos...',
+  'Pequeño recordatorio amistoso: tu yo de final de mes existe...',
+  'Hoy tengo una corazonada financiera bastante fuerte...',
+  'No quiero asustarte, pero los cafés también saben sumar...',
+  'Estoy vigilando tus gastos con elegancia y una libreta invisible...',
+  'Respira. Podemos organizar este mes sin dramas contables...',
+  'Mi predicción de hoy: ahorrar un poco también puede ser divertido...',
+  'He venido con energía retro y ganas de mejorar tus números...',
+  'Confío en ti, pero también confío en revisar ese gasto dos veces...',
+]
 
 function formatEuro(value) {
   const number = Number(value)
@@ -138,6 +151,10 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false)
   const [activeInsightsModal, setActiveInsightsModal] = useState(null)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+  const [dashboardBotMessage] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * dashboardBotMessages.length)
+    return dashboardBotMessages[randomIndex]
+  })
   const [category, setCategory] = useState('comida')
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -478,6 +495,11 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
               </video>
             </div>
             <img src={kakebotTextImage} alt="KakeBot" className="dashboard-mascot-logo" />
+            <div className="dashboard-bot-chatline" aria-live="polite">
+              <span className="dashboard-bot-chatlabel">BOT&gt;</span>
+              <p>{dashboardBotMessage}</p>
+              <span className="dashboard-bot-cursor" aria-hidden="true"></span>
+            </div>
           </div>
           <p className="dashboard-text">
             Has entrado como <strong>{user.username}</strong>. Esta es tu página
@@ -560,16 +582,12 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
         </div>
       </section>
 
-      {isExpenseModalOpen ? (
-        <div className="modal-overlay" onClick={handleCloseExpenseModal} role="presentation">
-          <div
-            className="expense-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="expense-modal-title"
-            style={{ '--modal-background': `url(${chatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={isExpenseModalOpen}
+        onClose={handleCloseExpenseModal}
+        labelledBy="expense-modal-title"
+        background={chatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Nuevo gasto</p>
@@ -630,20 +648,15 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
 
-      {activeInsightsModal === 'today' ? (
-        <div className="modal-overlay" onClick={handleCloseInsightsModal} role="presentation">
-          <div
-            className="expense-modal insights-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="today-modal-title"
-            style={{ '--modal-background': `url(${lightChatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={activeInsightsModal === 'today'}
+        onClose={handleCloseInsightsModal}
+        className="insights-modal"
+        labelledBy="today-modal-title"
+        background={lightChatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Hoy</p>
@@ -704,20 +717,15 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
 
-      {activeInsightsModal === 'month' ? (
-        <div className="modal-overlay" onClick={handleCloseInsightsModal} role="presentation">
-          <div
-            className="expense-modal insights-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="month-modal-title"
-            style={{ '--modal-background': `url(${lightChatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={activeInsightsModal === 'month'}
+        onClose={handleCloseInsightsModal}
+        className="insights-modal"
+        labelledBy="month-modal-title"
+        background={lightChatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Mes</p>
@@ -809,20 +817,15 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
 
-      {activeInsightsModal === 'period' ? (
-        <div className="modal-overlay" onClick={handleCloseInsightsModal} role="presentation">
-          <div
-            className="expense-modal insights-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="period-modal-title"
-            style={{ '--modal-background': `url(${lightChatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={activeInsightsModal === 'period'}
+        onClose={handleCloseInsightsModal}
+        className="insights-modal"
+        labelledBy="period-modal-title"
+        background={lightChatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Por período</p>
@@ -898,20 +901,15 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
 
-      {activeInsightsModal === 'recent' ? (
-        <div className="modal-overlay" onClick={handleCloseInsightsModal} role="presentation">
-          <div
-            className="expense-modal insights-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="recent-modal-title"
-            style={{ '--modal-background': `url(${lightChatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={activeInsightsModal === 'recent'}
+        onClose={handleCloseInsightsModal}
+        className="insights-modal"
+        labelledBy="recent-modal-title"
+        background={lightChatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Recientes</p>
@@ -957,20 +955,15 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
 
-      {isSettingsModalOpen ? (
-        <div className="modal-overlay" onClick={handleCloseSettingsModal} role="presentation">
-          <div
-            className="expense-modal insights-modal"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="settings-modal-title"
-            style={{ '--modal-background': `url(${lightChatBackground})` }}
-          >
+      <AnimatedModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseSettingsModal}
+        className="insights-modal"
+        labelledBy="settings-modal-title"
+        background={lightChatBackground}
+      >
             <div className="expense-modal-header">
               <div>
                 <p className="card-label">Configuración</p>
@@ -1045,9 +1038,7 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 Cerrar
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </AnimatedModal>
     </main>
   )
 }

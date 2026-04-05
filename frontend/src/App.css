@@ -819,6 +819,39 @@
   color: #57431a;
 }
 
+.dashboard-limits-callout {
+  max-width: 1180px;
+  width: min(100%, 1180px);
+  margin: 0.1rem auto 0;
+  padding: 1rem 1.15rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid rgba(84, 58, 10, 0.12);
+  border-radius: 1.2rem;
+  background: rgba(255, 250, 239, 0.92);
+  box-shadow:
+    0 16px 28px rgba(41, 26, 4, 0.08),
+    0 4px 0 rgba(126, 91, 25, 0.12);
+}
+
+.dashboard-limits-callout h2 {
+  margin: 0;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 1.35rem;
+  color: #1d1306;
+}
+
+.dashboard-limits-button {
+  min-width: 15.5rem;
+}
+
+.dashboard-limits-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
 .dashboard-footer-actions {
   max-width: 1180px;
   width: min(100%, 1180px);
@@ -964,6 +997,63 @@
 
 .insights-modal {
   width: min(100%, 34rem);
+}
+
+.limits-modal {
+  width: min(100%, 32rem);
+}
+
+.category-limits-form {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.55rem;
+}
+
+.category-limit-field span {
+  font-weight: 800;
+  color: #332307;
+}
+
+.category-limit-field input {
+  background: #fffdfa;
+  border-color: rgba(58, 41, 10, 0.14);
+}
+
+.category-limit-field.theme-home,
+.category-limit-field.theme-food,
+.category-limit-field.theme-transport,
+.category-limit-field.theme-leisure,
+.category-limit-field.theme-other {
+  background: transparent;
+  border-left: none;
+}
+
+.category-limit-field.theme-home input {
+  background: rgba(255, 228, 122, 0.9);
+}
+
+.category-limit-field.theme-food input {
+  background: rgba(178, 238, 188, 0.9);
+}
+
+.category-limit-field.theme-transport input {
+  background: rgba(181, 223, 248, 0.9);
+}
+
+.category-limit-field.theme-leisure input {
+  background: rgba(220, 196, 245, 0.9);
+}
+
+.category-limit-field.theme-other input {
+  background: rgba(248, 214, 172, 0.92);
+}
+
+.category-limits-note {
+  margin: -0.1rem 0 0;
+  text-align: center;
+  color: #5b4519;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .today-expenses-list,
@@ -1334,6 +1424,16 @@
 
   .review-card {
     padding: 0.85rem;
+  }
+
+  .dashboard-limits-callout {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .dashboard-limits-button {
+    min-width: min(100%, 16rem);
   }
 
   .dashboard-footer-actions {

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TelegramAlertService {
 
-    private static final String SAD_BOT_IMAGE_PATH = "static/images/sadBot.png";
+    private static final String SAD_BOT_IMAGE_PATH = "static/images/sadBotTelegram.png";
 
     private final TelegramClient telegramClient;
 

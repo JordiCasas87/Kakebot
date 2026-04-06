@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import chatBackground from '../assets/backgrounds/fondoChat.png'
 import explanationBackground from '../assets/backgrounds/fondoExplicacionClaro.png'
 import lightChatBackground from '../assets/backgrounds/fondoChatClaro.png'
-import mascotAnimation from '../assets/animations/kakebotAnimHappy.mp4'
+import mascotAnimation from '../assets/animations/BotStart.mp4'
 import originalKakeboImage from '../assets/images/kakebo.jpg'
-import notebookIcon from '../assets/images/iconoLibreta.png'
 import AnimatedModal from '../components/AnimatedModal.jsx'
 import { generateTelegramLinkCode, loginUser, registerUser } from '../services/authService.js'
 import '../App.css'
@@ -193,14 +192,13 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
 
         <div className="hero-kakebo-entry" aria-label="Acceso a información sobre KakeBot">
           <button
-            className="hero-kakebo-icon"
+            className="hero-kakebo-link"
             type="button"
             aria-label="What is KakeBot?"
             onClick={() => setIsKakeboModalOpen(true)}
           >
-            <img src={notebookIcon} alt="" />
+            What&apos;s KakeBot?
           </button>
-          <span className="hero-kakebo-text">What&apos;s KakeBot?</span>
         </div>
       </section>
 

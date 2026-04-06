@@ -85,16 +85,16 @@ const monthOptions = [
 const currentDate = new Date()
 const periodYearOptions = Array.from({ length: 5 }, (_, index) => currentDate.getFullYear() - index)
 const dashboardBotMessages = [
-  'Hola. He hecho números y creo que hoy toca ahorrar un poquito más...',
-  'He revisado la libreta mental y sigo pensando en tus próximos gastos...',
-  'Pequeño recordatorio amistoso: tu yo de final de mes existe...',
-  'Hoy tengo una corazonada financiera bastante fuerte...',
-  'No quiero asustarte, pero los cafés también saben sumar...',
-  'Estoy vigilando tus gastos con elegancia y una libreta invisible...',
-  'Respira. Podemos organizar este mes sin dramas contables...',
-  'Mi predicción de hoy: ahorrar un poco también puede ser divertido...',
-  'He venido con energía retro y ganas de mejorar tus números...',
-  'Confío en ti, pero también confío en revisar ese gasto dos veces...',
+  'Hoy toca gastar con cabeza...',
+  'Estoy vigilando tus números...',
+  'Ahorra un poco, yo te cubro...',
+  'Ese gasto... ¿seguro que era clave?...',
+  'Vamos bien, pero no te confíes...',
+  'Tu yo de fin de mes observa...',
+  'Hoy vengo en modo ahorro total...',
+  'Pequeños gastos, grandes sustos...',
+  'Respira. Aún podemos cuadrar el mes...',
+  'Estoy atento a tus caprichos...',
 ]
 
 function formatEuro(value) {
@@ -204,6 +204,10 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [categoryLimitsForm, setCategoryLimitsForm] = useState(createEmptyCategoryLimits)
   const [telegramLinkCodeData, setTelegramLinkCodeData] = useState(null)
   const [isTelegramLinked, setIsTelegramLinked] = useState(Boolean(user.externalId))
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [])
 
   useEffect(() => {
     const hasOpenModal =
@@ -794,19 +798,19 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                           <span>{categoryLabelMap[expense.category] ?? expense.category}</span>
                           <div className="expense-card-amount-block">
                             <strong>{formatEuro(expense.amount)}</strong>
-                            <button
-                              className="expense-delete-button"
-                              disabled={deletingExpenseId === expense.id}
-                              onClick={() => handleDeleteTodayExpense(expense.id)}
-                              type="button"
-                            >
-                              {deletingExpenseId === expense.id ? 'Borrando...' : 'Eliminar'}
-                            </button>
                           </div>
                         </div>
                         <p>{expense.description}</p>
                         <div className="expense-card-footer">
                           <small>{formatTime(expense.registeredAt)}</small>
+                          <button
+                            className="expense-delete-button"
+                            disabled={deletingExpenseId === expense.id}
+                            onClick={() => handleDeleteTodayExpense(expense.id)}
+                            type="button"
+                          >
+                            {deletingExpenseId === expense.id ? 'Borrando...' : 'Eliminar'}
+                          </button>
                         </div>
                       </article>
                     ))}
@@ -895,19 +899,19 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                               <span>{categoryLabelMap[expense.category] ?? expense.category}</span>
                               <div className="expense-card-amount-block">
                                 <strong>{formatEuro(expense.amount)}</strong>
-                                <button
-                                  className="expense-delete-button"
-                                  disabled={deletingExpenseId === expense.id}
-                                  onClick={() => handleDeleteMonthExpense(expense.id)}
-                                  type="button"
-                                >
-                                  {deletingExpenseId === expense.id ? 'Borrando...' : 'Eliminar'}
-                                </button>
                               </div>
                             </div>
                             <p>{expense.description}</p>
                             <div className="expense-card-footer">
                               <small>{formatShortDate(expense.registeredAt)} · {formatTime(expense.registeredAt)}</small>
+                              <button
+                                className="expense-delete-button"
+                                disabled={deletingExpenseId === expense.id}
+                                onClick={() => handleDeleteMonthExpense(expense.id)}
+                                type="button"
+                              >
+                                {deletingExpenseId === expense.id ? 'Borrando...' : 'Eliminar'}
+                              </button>
                             </div>
                           </article>
                         ))}

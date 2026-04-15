@@ -307,6 +307,9 @@ function AuthPage({ onLoginSuccess, onRegisterSuccess }) {
           <p className="project-footnote">
             Proyecto personal de Jordi Casas González · Marzo 2026 · Versión 0.1
           </p>
+          <p className="mobile-first-note">
+            Aplicación optimizada para una experiencia mobile-first.
+          </p>
         </div>
       </section>
 

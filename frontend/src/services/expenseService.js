@@ -114,3 +114,22 @@ export async function deleteExpense(userId, expenseId) {
 
   return parseJsonResponse(response)
 }
+
+export async function downloadMonthlyExpensePdf(userId, year, month) {
+  const searchParams = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+  })
+
+  const response = await fetch(`/api/reports/expenses/monthly/pdf?${searchParams.toString()}`, {
+    headers: {
+      'X-User-Id': String(userId),
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('No se ha podido descargar el PDF mensual.')
+  }
+
+  return response.blob()
+}

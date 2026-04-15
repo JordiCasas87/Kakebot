@@ -9,6 +9,7 @@ import { getCategoryLimits, updateCategoryLimit } from '../services/categoryLimi
 import {
   createExpense,
   deleteExpense,
+  downloadMonthlyExpensePdf,
   getCategoryTotalsByPeriod,
   getMonthExpenses,
   getMonthCategoryTotals,
@@ -202,6 +203,8 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
   const [categoryLimitsError, setCategoryLimitsError] = useState('')
   const [categoryLimitsFeedback, setCategoryLimitsFeedback] = useState('')
   const [categoryLimitsForm, setCategoryLimitsForm] = useState(createEmptyCategoryLimits)
+  const [isDownloadingMonthlyPdf, setIsDownloadingMonthlyPdf] = useState(false)
+  const [monthlyPdfError, setMonthlyPdfError] = useState('')
   const [telegramLinkCodeData, setTelegramLinkCodeData] = useState(null)
   const [isTelegramLinked, setIsTelegramLinked] = useState(Boolean(user.externalId))
 
@@ -431,6 +434,30 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
       setInsightsError(error.message)
     } finally {
       setIsLoadingInsights(false)
+    }
+  }
+
+  const handleDownloadMonthlyPdf = async () => {
+    setMonthlyPdfError('')
+    setIsDownloadingMonthlyPdf(true)
+
+    try {
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth() + 1
+      const pdfBlob = await downloadMonthlyExpensePdf(user.id, year, month)
+      const fileUrl = window.URL.createObjectURL(pdfBlob)
+      const link = document.createElement('a')
+
+      link.href = fileUrl
+      link.download = `kakebot-gastos-${year}-${String(month).padStart(2, '0')}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(fileUrl)
+    } catch (error) {
+      setMonthlyPdfError(error.message)
+    } finally {
+      setIsDownloadingMonthlyPdf(false)
     }
   }
 
@@ -675,7 +702,25 @@ function DashboardPage({ user, onLogout, onUserUpdate }) {
                 <p>{option.description}</p>
               </article>
             ))}
+
+            <article
+              className={`review-card review-card-clickable ${isDownloadingMonthlyPdf ? 'review-card-disabled' : ''}`}
+              onClick={handleDownloadMonthlyPdf}
+              role="button"
+              tabIndex={isDownloadingMonthlyPdf ? -1 : 0}
+              onKeyDown={(event) => {
+                if (!isDownloadingMonthlyPdf && (event.key === 'Enter' || event.key === ' ')) {
+                  event.preventDefault()
+                  handleDownloadMonthlyPdf()
+                }
+              }}
+            >
+              <h3>{isDownloadingMonthlyPdf ? 'Preparando PDF' : 'Descargar PDF mensual'}</h3>
+              <p>Genera un informe del mes con categorias, detalle y total general.</p>
+            </article>
           </div>
+
+          {monthlyPdfError ? <p className="auth-error-message">{monthlyPdfError}</p> : null}
         </div>
 
         <div className="dashboard-limits-callout">

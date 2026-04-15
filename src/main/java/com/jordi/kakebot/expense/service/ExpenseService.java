@@ -76,14 +76,22 @@ public class ExpenseService {
         User user = resolveUserOrThrow(userId);
 
         LocalDate today = LocalDate.now(clock);
-        LocalDate firstDayOfMonth = today.withDayOfMonth(1);
-        LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+        return getExpensesForPeriod(user.getId(), today.getYear(), today.getMonthValue());
+    }
 
-        LocalDateTime startOfMonth = firstDayOfMonth.atStartOfDay();
-        LocalDateTime endOfMonth = lastDayOfMonth.atTime(LocalTime.MAX);
+    public List<ExpenseResponseDto> getExpensesByMonth(Long userId, int year, int month) {
+        User user = resolveUserOrThrow(userId);
+        validatePeriod(year, month);
 
-        return expenseRepository
-                .findByUserIdAndRegisteredAtBetweenOrderByRegisteredAtDesc(user.getId(), startOfMonth, endOfMonth)
+        return getExpensesForPeriod(user.getId(), year, month);
+    }
+
+    private List<ExpenseResponseDto> getExpensesForPeriod(Long userId, int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime end = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+
+        return expenseRepository.findByUserIdAndRegisteredAtBetweenOrderByRegisteredAtDesc(userId, start, end)
                 .stream()
                 .map(expenseMapper::toResponseDto)
                 .toList();
@@ -133,13 +141,7 @@ public class ExpenseService {
 
     public List<CategoryTotalResponseDto> getCategoryTotalsByMonth(Long userId, int year, int month) {
         User user = resolveUserOrThrow(userId);
-
-        if (month < 1 || month > 12) {
-            throw new InvalidExpenseRequestException("El mes debe estar entre 1 y 12");
-        }
-        if (year < 2000 || year > 2100) {
-            throw new InvalidExpenseRequestException("El anio debe estar entre 2000 y 2100");
-        }
+        validatePeriod(year, month);
 
         return getCategoryTotalsForPeriod(user.getId(), year, month);
     }
@@ -189,6 +191,15 @@ public class ExpenseService {
         return totalsByCategory.entrySet().stream()
                 .map(entry -> new CategoryTotalResponseDto(entry.getKey(), entry.getValue()))
                 .toList();
+    }
+
+    private void validatePeriod(int year, int month) {
+        if (month < 1 || month > 12) {
+            throw new InvalidExpenseRequestException("El mes debe estar entre 1 y 12");
+        }
+        if (year < 2000 || year > 2100) {
+            throw new InvalidExpenseRequestException("El anio debe estar entre 2000 y 2100");
+        }
     }
 
     private User resolveUserOrThrow(Long userId) {

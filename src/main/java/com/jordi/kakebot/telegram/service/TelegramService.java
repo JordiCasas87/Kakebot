@@ -1,6 +1,7 @@
 package com.jordi.kakebot.telegram.service;
 
 import com.jordi.kakebot.expense.dto.ExpenseRequestDto;
+import com.jordi.kakebot.expense.dto.CategoryTotalResponseDto;
 import com.jordi.kakebot.expense.enums.ExpenseCategory;
 import com.jordi.kakebot.expense.exception.InvalidExpenseRequestException;
 import com.jordi.kakebot.expense.service.ExpenseService;
@@ -13,12 +14,18 @@ import com.jordi.kakebot.user.model.User;
 import com.jordi.kakebot.user.repository.UserRepository;
 import com.jordi.kakebot.user.service.UserTelegramLinkCodeService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.List;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TelegramService {
 
     private static final String LINK_COMMAND_PREFIX = "/link";
+    private static final String MONTH_SUMMARY_IMAGE_PATH = "static/images/botPillopng.png";
     private static final int EXPENSE_LINES_COUNT = 3;
 
     private final TelegramClient telegramClient;
@@ -71,6 +78,10 @@ public class TelegramService {
             return TelegramMessageType.LINK_COMMAND;
         }
 
+        if (text.equalsIgnoreCase("/mes")) {
+            return TelegramMessageType.MONTH_SUMMARY_COMMAND;
+        }
+
         if (!text.startsWith("/")) {
             return TelegramMessageType.EXPENSE_TEXT;
         }
@@ -88,6 +99,7 @@ public class TelegramService {
             case START_COMMAND -> handleStartCommand(telegramUserId, chatId);
             case HELP_COMMAND -> handleHelpCommand(telegramUserId, chatId);
             case LINK_COMMAND -> handleLinkCommand(telegramUserId, chatId, text);
+            case MONTH_SUMMARY_COMMAND -> handleMonthSummaryCommand(telegramUserId, chatId);
             case EXPENSE_TEXT -> handleExpenseText(telegramUserId, chatId, text);
             case UNKNOWN -> handleUnknownCommand(telegramUserId, chatId, text);
         }
@@ -111,6 +123,9 @@ public class TelegramService {
 
                 /link CODIGO
                 Vincula tu cuenta de Telegram con tu usuario 🔗
+
+                /mes
+                Consulta el total del mes por categorias y el total general 📊
 
                 /help
                 Muestra esta ayuda 📖
@@ -145,6 +160,18 @@ public class TelegramService {
                     chatId,
                     "Tu cuenta ha quedado vinculada correctamente. Ya puedes usar KakeBot desde Telegram."
             );
+        } catch (InvalidUserRequestException exception) {
+            telegramClient.sendMessage(chatId, exception.getMessage());
+        }
+    }
+
+    private void handleMonthSummaryCommand(Long telegramUserId, Long chatId) {
+        try {
+            User linkedUser = resolveLinkedUserOrThrow(telegramUserId);
+            List<CategoryTotalResponseDto> categoryTotals = expenseService.getMonthTotalByCategory(linkedUser.getId());
+            BigDecimal monthTotal = expenseService.getMonthTotal(linkedUser.getId()).total();
+
+            telegramClient.sendPhoto(chatId, MONTH_SUMMARY_IMAGE_PATH, buildMonthSummaryMessage(categoryTotals, monthTotal));
         } catch (InvalidUserRequestException exception) {
             telegramClient.sendMessage(chatId, exception.getMessage());
         }
@@ -187,7 +214,7 @@ public class TelegramService {
 
         if (lines.length != EXPENSE_LINES_COUNT) {
             throw new InvalidExpenseRequestException(
-                    "Formato invalido. Envia el gasto en 3 lineas: CATEGORIA, descripcion e importe."
+                    "Formato de gasto invalido. Envia el gasto en 3 lineas: CATEGORIA, su descripción e importe."
             );
         }
 
@@ -203,7 +230,7 @@ public class TelegramService {
             return ExpenseCategory.fromValue(rawCategory);
         } catch (IllegalArgumentException exception) {
             throw new InvalidExpenseRequestException(
-                    "Categoria invalida. Usa una de estas: HOME, FOOD, TRANSPORT, LEISURE, OTHER."
+                    "Categoria de gasto invalida. Usa una de estas: HOME, FOOD, TRANSPORT, LEISURE, OTHER."
             );
         }
     }
@@ -220,5 +247,38 @@ public class TelegramService {
         } catch (NumberFormatException exception) {
             throw new InvalidExpenseRequestException("El importe no es valido.");
         }
+    }
+
+    private String buildMonthSummaryMessage(List<CategoryTotalResponseDto> categoryTotals, BigDecimal monthTotal) {
+        StringBuilder messageBuilder = new StringBuilder("Mes y categorias\n\n");
+
+        categoryTotals.forEach(categoryTotal -> messageBuilder
+                .append(formatCategoryForSummary(categoryTotal.category()))
+                .append(": ")
+                .append(formatAmount(categoryTotal.total()))
+                .append("\n")
+        );
+
+        messageBuilder
+                .append("\nTotal del mes: ")
+                .append(formatAmount(monthTotal));
+
+        return messageBuilder.toString();
+    }
+
+    private String formatCategoryForSummary(ExpenseCategory category) {
+        return switch (category) {
+            case HOME -> "Casa";
+            case FOOD -> "Comida";
+            case TRANSPORT -> "Transporte";
+            case LEISURE -> "Ocio";
+            case OTHER -> "Otros";
+        };
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(new Locale("es", "ES"));
+        DecimalFormat decimalFormat = new DecimalFormat("#,##0.00 €", symbols);
+        return decimalFormat.format(amount.setScale(2, RoundingMode.HALF_UP));
     }
 }

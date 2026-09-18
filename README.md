@@ -163,6 +163,8 @@ Los tests web simulan los servicios porque su objetivo es verificar el contrato 
 
 Se mantiene un conjunto reducido que levanta la aplicación en un puerto real y recorre todas las capas internas:
 
+> Estos E2E validan el backend completo mediante peticiones HTTP reales. No son pruebas de navegador ni automatizan todavía la interfaz React.
+
 - Registro de un usuario.
 - Inicio de sesión de un usuario registrado.
 - Creación y consulta de un gasto persistido.
@@ -184,21 +186,27 @@ Webhook HTTP → Controller → TelegramService → TelegramClient → WireMock
 
 WireMock sustituye a la API real de Telegram durante la prueba. Así se comprueban la URL, el método y el cuerpo enviados sin utilizar un token real, depender de Internet ni mandar mensajes a usuarios.
 
-Los tests del frontend con Vitest y React Testing Library, junto con la ejecución automática mediante integración continua, forman parte de la evolución futura del proyecto.
+Los tests del frontend con Vitest y React Testing Library forman parte de la evolución futura del proyecto.
 
-## Evolución pendiente
+## Alcance actual y deuda técnica conocida
 
-La autenticación actual utiliza la cabecera `X-User-Id` como una solución sencilla para centrar el aprendizaje en la integración entre el backend y Telegram. En una aplicación orientada a producción, lo adecuado sería incorporar autenticación y autorización con Spring Security y JWT.
+La deuda técnica se mantiene documentada como parte del aprendizaje y no se presenta como funcionalidad terminada:
 
-JWT ya se ha practicado en otros proyectos disponibles en el repositorio y portfolio personal, pero su incorporación a KakeBot queda pendiente como futura mejora. La suite actual se centra en estudiar y mostrar de forma explícita los niveles unitario, de integración y end-to-end antes de ampliar la automatización al frontend.
+- **Autenticación:** actualmente se utiliza la cabecera `X-User-Id` para centrar el ejercicio en la integración entre el backend y Telegram. Antes de considerar la aplicación preparada para producción se incorporaría autenticación y autorización con Spring Security y JWT. JWT ya se ha practicado en otros proyectos del portfolio, pero su integración en KakeBot queda pendiente.
+- **Migraciones de base de datos:** durante esta etapa Hibernate gestiona el esquema con `ddl-auto=update`. Una evolución natural sería versionar los cambios mediante Flyway o Liquibase.
+- **Automatización de calidad:** Render realiza el autodespliegue de la aplicación, pero el `Dockerfile` omite los tests durante la construcción. Falta un flujo de integración continua independiente que ejecute los tests de backend y frontend antes de desplegar.
+- **Frontend:** la pirámide actual cubre el backend. Queda pendiente añadir pruebas automatizadas de componentes y flujos de la interfaz React.
+
+Los secretos reales no se guardan en el repositorio: la contraseña de MySQL y el token de Telegram se reciben mediante variables de entorno, y el archivo `.env` local está excluido de Git.
 
 ## Próximos pasos
 
-1. Incorporar tests del frontend.
-2. Automatizar la ejecución de los tests del backend y del frontend mediante integración continua.
-3. Incorporar autenticación y autorización con Spring Security y JWT.
-4. Ampliar el bot para registrar y consultar más información desde Telegram.
-5. Continuar mejorando la experiencia de usuario y el despliegue.
+1. Incorporar autenticación y autorización con Spring Security y JWT.
+2. Versionar el esquema de MySQL con Flyway o Liquibase.
+3. Incorporar tests del frontend con Vitest y React Testing Library.
+4. Ejecutar automáticamente los tests antes del autodespliegue de Render.
+5. Ampliar el bot para registrar y consultar más información desde Telegram.
+6. Continuar mejorando la experiencia de usuario y el despliegue.
 
 ## Ejecución local
 

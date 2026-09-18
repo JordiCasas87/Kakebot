@@ -95,7 +95,7 @@ Dentro de cada dominio se separan controladores, servicios, repositorios, entida
 - Bean Validation y BCrypt
 - Swagger / OpenAPI
 - OpenPDF
-- JUnit 5 y Testcontainers
+- JUnit 5, Mockito, MockMvc, Testcontainers y WireMock
 
 ### Frontend
 
@@ -124,11 +124,20 @@ Este flujo es la parte central del objetivo educativo: conectar una aplicación 
 
 ## Estrategia de testing
 
-Uno de los siguientes objetivos principales de KakeBot es convertir el proyecto en un ejercicio completo de pruebas automatizadas. Se aplicará la pirámide de tests para mantener una suite rápida, fiable y fácil de mantener.
+KakeBot también funciona como ejercicio práctico de testing. La suite aplica la pirámide de pruebas: una base amplia de tests unitarios, un grupo menor de tests de integración y pocos recorridos end-to-end representativos.
+
+Actualmente, el backend cuenta con **176 ejecuciones automatizadas**:
+
+- **135 tests unitarios**.
+- **34 tests de integración**.
+- **6 tests end-to-end**.
+- **1 prueba de humo** que comprueba el arranque del contexto completo de Spring.
+
+La intención no es repetir los mismos casos en todos los niveles, sino comprobar una responsabilidad distinta en cada uno.
 
 ### 1. Tests unitarios
 
-Constituirán la base más amplia de la pirámide. Verificarán de forma aislada:
+Constituyen la base más amplia de la pirámide. Verifican de forma aislada:
 
 - Reglas de negocio de usuarios y gastos.
 - Cálculo de totales y periodos.
@@ -137,45 +146,59 @@ Constituirán la base más amplia de la pirámide. Verificarán de forma aislada
 - Mappers, validaciones y deserialización de importes.
 - Procesamiento de comandos de Telegram.
 
-Las dependencias externas se sustituirán por dobles de prueba con Mockito.
+Las dependencias se sustituyen por dobles de prueba con Mockito. De esta forma se comprueba la lógica sin cargar Spring, acceder a MySQL ni llamar a Telegram.
 
 ### 2. Tests de integración
 
-Comprobarán la colaboración entre las distintas capas:
+Comprueban puntos concretos de colaboración entre la aplicación y su infraestructura:
 
-- Repositorios JPA contra MySQL mediante Testcontainers.
-- Endpoints REST con Spring Boot y MockMvc.
+- Repositorios JPA, Hibernate y una instancia real de MySQL 8.4 mediante Testcontainers.
+- Capa web de todos los controllers mediante `@WebMvcTest` y MockMvc.
 - Serialización, validación y tratamiento global de errores.
-- Persistencia de usuarios, gastos, límites y códigos temporales.
+- Persistencia de usuarios, gastos, límites y códigos temporales de Telegram.
+
+Los tests web simulan los servicios porque su objetivo es verificar el contrato HTTP. Los tests de repositorio, en cambio, utilizan MySQL real. Esta separación mantiene visible qué integración comprueba cada clase.
 
 ### 3. Tests end-to-end
 
-Se mantendrá un conjunto reducido para validar los flujos más importantes desde la perspectiva del usuario:
+Se mantiene un conjunto reducido que levanta la aplicación en un puerto real y recorre todas las capas internas:
 
-- Registro, inicio de sesión y consulta del perfil.
-- Creación y consulta de un gasto.
-- Configuración de un límite por categoría.
-- Generación y consumo de un código de vinculación con Telegram.
+- Registro de un usuario.
+- Inicio de sesión de un usuario registrado.
+- Creación y consulta de un gasto persistido.
+- Configuración y consulta de un límite por categoría.
+- Generación de un informe PDF usando datos persistidos.
+- Recepción de un webhook y envío de una respuesta a Telegram.
 
-La API real de Telegram no se utilizará en todos los tests. Sus respuestas se simularán para que la suite sea determinista, dejando comprobaciones manuales o específicas para validar la integración real.
+Los cinco primeros recorridos siguen este camino:
 
-También se incorporarán tests del frontend con Vitest y React Testing Library, además de la ejecución automática de la suite mediante integración continua.
+```text
+HTTP → Controller → Service → Repository → MySQL Testcontainers
+```
+
+El recorrido de Telegram atraviesa el límite externo de la aplicación:
+
+```text
+Webhook HTTP → Controller → TelegramService → TelegramClient → WireMock
+```
+
+WireMock sustituye a la API real de Telegram durante la prueba. Así se comprueban la URL, el método y el cuerpo enviados sin utilizar un token real, depender de Internet ni mandar mensajes a usuarios.
+
+Los tests del frontend con Vitest y React Testing Library, junto con la ejecución automática mediante integración continua, forman parte de la evolución futura del proyecto.
 
 ## Evolución pendiente
 
 La autenticación actual utiliza la cabecera `X-User-Id` como una solución sencilla para centrar el aprendizaje en la integración entre el backend y Telegram. En una aplicación orientada a producción, lo adecuado sería incorporar autenticación y autorización con Spring Security y JWT.
 
-JWT ya se ha practicado en otros proyectos disponibles en el repositorio y portfolio personal, pero su incorporación a KakeBot queda pendiente como una futura mejora. El otro gran paso del proyecto será desarrollar progresivamente su suite de pruebas para practicar distintos niveles de testing y aplicar de forma razonada la pirámide de tests.
+JWT ya se ha practicado en otros proyectos disponibles en el repositorio y portfolio personal, pero su incorporación a KakeBot queda pendiente como futura mejora. La suite actual se centra en estudiar y mostrar de forma explícita los niveles unitario, de integración y end-to-end antes de ampliar la automatización al frontend.
 
 ## Próximos pasos
 
-1. Crear tests unitarios para los servicios y las reglas de negocio principales.
-2. Añadir tests de controladores, repositorios e integración con Testcontainers.
-3. Incorporar tests del frontend.
-4. Automatizar la ejecución de los tests del backend y del frontend.
-5. Incorporar autenticación y autorización con Spring Security y JWT.
-6. Ampliar el bot para registrar y consultar más información desde Telegram.
-7. Continuar mejorando la experiencia de usuario y el despliegue.
+1. Incorporar tests del frontend.
+2. Automatizar la ejecución de los tests del backend y del frontend mediante integración continua.
+3. Incorporar autenticación y autorización con Spring Security y JWT.
+4. Ampliar el bot para registrar y consultar más información desde Telegram.
+5. Continuar mejorando la experiencia de usuario y el despliegue.
 
 ## Ejecución local
 
@@ -227,7 +250,7 @@ npm run build
 ./mvnw test
 ```
 
-Los tests de integración basados en Testcontainers requieren que Docker esté en ejecución. La suite de pruebas se encuentra actualmente en desarrollo.
+Docker debe estar en ejecución porque los tests de persistencia y los E2E levantan MySQL 8.4 mediante Testcontainers. WireMock se inicia automáticamente para el recorrido de Telegram; no se necesita un token real para ejecutar la suite.
 
 ## Despliegue
 

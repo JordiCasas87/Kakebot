@@ -159,35 +159,23 @@ Se mantendrá un conjunto reducido para validar los flujos más importantes desd
 
 La API real de Telegram no se utilizará en todos los tests. Sus respuestas se simularán para que la suite sea determinista, dejando comprobaciones manuales o específicas para validar la integración real.
 
-También se incorporarán tests del frontend con Vitest y React Testing Library, medición de cobertura del backend con JaCoCo y ejecución automática mediante integración continua.
+También se incorporarán tests del frontend con Vitest y React Testing Library, además de la ejecución automática de la suite mediante integración continua.
 
-## Deuda técnica conocida
+## Evolución pendiente
 
-- La autenticación actual identifica al usuario mediante la cabecera `X-User-Id`; debe sustituirse por Spring Security con JWT o sesiones.
-- La cobertura de tests es todavía mínima y debe ampliarse siguiendo la pirámide descrita anteriormente.
-- El frontend aún no dispone de tests automatizados.
-- Falta integración continua para ejecutar tests, lint y builds en cada cambio.
-- La configuración de ESLint debe excluir correctamente los artefactos generados y resolver los errores pendientes del código fuente.
-- La imagen de MySQL utilizada por Testcontainers debe fijarse a una versión concreta.
-- `spring.jpa.hibernate.ddl-auto=update` debe reemplazarse por migraciones versionadas con Flyway o Liquibase.
-- El webhook de Telegram debe validar un secreto que permita comprobar el origen de las peticiones.
-- Deben mejorarse el registro de errores, la observabilidad y la configuración específica por entorno.
-- Es necesario seguir ampliando la documentación de la API y de las decisiones arquitectónicas.
+La autenticación actual utiliza la cabecera `X-User-Id` como una solución sencilla para centrar el aprendizaje en la integración entre el backend y Telegram. En una aplicación orientada a producción, lo adecuado sería incorporar autenticación y autorización con Spring Security y JWT.
 
-Documentar esta deuda permite diferenciar las simplificaciones tomadas para aprender de las decisiones necesarias en una aplicación preparada para producción.
+JWT ya se ha practicado en otros proyectos disponibles en el repositorio y portfolio personal, pero su incorporación a KakeBot queda pendiente como una futura mejora. El otro gran paso del proyecto será desarrollar progresivamente su suite de pruebas para practicar distintos niveles de testing y aplicar de forma razonada la pirámide de tests.
 
 ## Próximos pasos
 
 1. Crear tests unitarios para los servicios y las reglas de negocio principales.
 2. Añadir tests de controladores, repositorios e integración con Testcontainers.
 3. Incorporar tests del frontend.
-4. Añadir JaCoCo y establecer un objetivo inicial de cobertura.
-5. Configurar GitHub Actions para backend y frontend.
-6. Implementar autenticación y autorización con Spring Security.
-7. Añadir migraciones de base de datos con Flyway o Liquibase.
-8. Proteger el webhook de Telegram.
-9. Ampliar el bot para registrar y consultar gastos desde Telegram.
-10. Mejorar el despliegue, la observabilidad y la experiencia de usuario.
+4. Automatizar la ejecución de los tests del backend y del frontend.
+5. Incorporar autenticación y autorización con Spring Security y JWT.
+6. Ampliar el bot para registrar y consultar más información desde Telegram.
+7. Continuar mejorando la experiencia de usuario y el despliegue.
 
 ## Ejecución local
 

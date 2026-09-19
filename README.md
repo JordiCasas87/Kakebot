@@ -126,6 +126,20 @@ Este flujo es la parte central del objetivo educativo: conectar una aplicación 
 
 KakeBot también funciona como ejercicio práctico de testing. La suite aplica la pirámide de pruebas: una base amplia de tests unitarios, un grupo menor de tests de integración y pocos recorridos end-to-end representativos.
 
+### Aprendizaje asistido con IA
+
+Para desarrollar y revisar esta estrategia se ha utilizado **Codex como herramienta de apoyo**. Su uso se ha planteado como parte de un ejercicio controlado de aprendizaje: identificar casos relevantes, contrastar el alcance de cada nivel de prueba y construir de forma progresiva una pirámide de testing coherente. También se ha empleado para ayudar a estructurar una documentación más clara y redactar descripciones de *pull requests* que reflejen sus objetivos, cambios, decisiones técnicas y forma de verificación. Todo este contenido se ha revisado y adaptado al estado real del proyecto; las decisiones sobre qué comprobar, la adaptación de los casos al dominio de KakeBot y la ejecución y validación de la suite se han realizado dentro del propio proyecto.
+
+En sus primeras etapas, KakeBot se centró principalmente en estudiar la comunicación entre un backend propio y dos interfaces externas: la API de Telegram y la API REST consumida por el frontend. Por ese motivo, la automatización de pruebas no recibió inicialmente la profundidad necesaria. La incorporación posterior de la suite permite corregir esa carencia y convertir el proyecto también en un caso de estudio sobre:
+
+- Las diferencias entre tests unitarios, de integración y end-to-end.
+- La responsabilidad y los límites de cada nivel de la pirámide.
+- El uso de mocks, MockMvc, Testcontainers y WireMock según el tipo de colaboración que se desea comprobar.
+- La selección de casos representativos sin repetir las mismas verificaciones en todas las capas.
+- La obtención de una cobertura funcional amplia basada en comportamientos y recorridos relevantes, no únicamente en una cifra de líneas ejecutadas.
+
+Este proceso sirve tanto para repasar conceptos de testing como para documentar una evolución real del proyecto: detectar una debilidad inicial, diseñar una estrategia proporcionada y verificarla mediante una suite automatizada reproducible.
+
 Actualmente, el backend cuenta con **176 ejecuciones automatizadas**:
 
 - **135 tests unitarios**.
